@@ -1,0 +1,31 @@
+[meta]
+source_hostname = "profile:minimal"
+machinist_version = "profile"
+
+[homebrew]
+taps = ["homebrew/core", "homebrew/cask"]
+
+[[homebrew.formulae]]
+name = "git"
+
+[[homebrew.formulae]]
+name = "gh"
+
+[[homebrew.formulae]]
+name = "jq"
+
+[[homebrew.formulae]]
+name = "tree"
+
+[[homebrew.formulae]]
+name = "starship"
+
+[[homebrew.casks]]
+name = "visual-studio-code"
+
+[[homebrew.casks]]
+name = "iterm2"
+
+[shell]
+default_shell = "/bin/zsh"
+prompt = "starship"

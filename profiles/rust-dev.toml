@@ -1,0 +1,39 @@
+[meta]
+source_hostname = "profile:rust-dev"
+machinist_version = "profile"
+
+[homebrew]
+taps = ["homebrew/core", "homebrew/cask"]
+
+[[homebrew.formulae]]
+name = "git"
+
+[[homebrew.formulae]]
+name = "gh"
+
+[[homebrew.formulae]]
+name = "starship"
+
+[[homebrew.casks]]
+name = "visual-studio-code"
+
+[[homebrew.casks]]
+name = "iterm2"
+
+[rust]
+toolchains = ["stable", "nightly"]
+default_toolchain = "stable"
+components = ["rustfmt", "clippy", "rust-analyzer"]
+
+[[rust.cargo_packages]]
+name = "cargo-watch"
+
+[[rust.cargo_packages]]
+name = "cargo-edit"
+
+[[rust.cargo_packages]]
+name = "cargo-expand"
+
+[shell]
+default_shell = "/bin/zsh"
+prompt = "starship"

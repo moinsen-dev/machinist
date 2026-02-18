@@ -1,0 +1,44 @@
+[meta]
+source_hostname = "profile:python-data"
+machinist_version = "profile"
+
+[homebrew]
+taps = ["homebrew/core", "homebrew/cask"]
+
+[[homebrew.formulae]]
+name = "git"
+
+[[homebrew.formulae]]
+name = "gh"
+
+[[homebrew.formulae]]
+name = "pyenv"
+
+[[homebrew.formulae]]
+name = "starship"
+
+[[homebrew.casks]]
+name = "visual-studio-code"
+
+[[homebrew.casks]]
+name = "docker"
+
+[[homebrew.casks]]
+name = "iterm2"
+
+[python]
+manager = "pyenv"
+default_version = "3.12"
+
+[[python.global_packages]]
+name = "jupyter"
+
+[[python.global_packages]]
+name = "pandas"
+
+[[python.global_packages]]
+name = "numpy"
+
+[shell]
+default_shell = "/bin/zsh"
+prompt = "starship"

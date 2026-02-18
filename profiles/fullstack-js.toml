@@ -1,0 +1,50 @@
+[meta]
+source_hostname = "profile:fullstack-js"
+machinist_version = "profile"
+
+[homebrew]
+taps = ["homebrew/core", "homebrew/cask", "homebrew/services"]
+
+[[homebrew.formulae]]
+name = "git"
+
+[[homebrew.formulae]]
+name = "gh"
+
+[[homebrew.formulae]]
+name = "jq"
+
+[[homebrew.formulae]]
+name = "starship"
+
+[[homebrew.formulae]]
+name = "postgresql@16"
+
+[[homebrew.formulae]]
+name = "redis"
+
+[[homebrew.casks]]
+name = "visual-studio-code"
+
+[[homebrew.casks]]
+name = "docker"
+
+[[homebrew.casks]]
+name = "iterm2"
+
+[node]
+manager = "fnm"
+default_version = "v22"
+
+[[node.global_packages]]
+name = "typescript"
+
+[[node.global_packages]]
+name = "pnpm"
+
+[[node.global_packages]]
+name = "eslint"
+
+[shell]
+default_shell = "/bin/zsh"
+prompt = "starship"

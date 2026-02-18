@@ -1,0 +1,43 @@
+[meta]
+source_hostname = "profile:go-dev"
+machinist_version = "profile"
+
+[homebrew]
+taps = ["homebrew/core", "homebrew/cask"]
+
+[[homebrew.formulae]]
+name = "git"
+
+[[homebrew.formulae]]
+name = "gh"
+
+[[homebrew.formulae]]
+name = "go"
+
+[[homebrew.formulae]]
+name = "protobuf"
+
+[[homebrew.formulae]]
+name = "grpcurl"
+
+[[homebrew.formulae]]
+name = "starship"
+
+[[homebrew.formulae]]
+name = "postgresql@16"
+
+[[homebrew.casks]]
+name = "docker"
+
+[[homebrew.casks]]
+name = "visual-studio-code"
+
+[[homebrew.casks]]
+name = "iterm2"
+
+[go]
+version = "1.24"
+
+[shell]
+default_shell = "/bin/zsh"
+prompt = "starship"

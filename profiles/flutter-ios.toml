@@ -1,0 +1,34 @@
+[meta]
+source_hostname = "profile:flutter-ios"
+machinist_version = "profile"
+
+[homebrew]
+taps = ["homebrew/core", "homebrew/cask"]
+
+[[homebrew.formulae]]
+name = "git"
+
+[[homebrew.formulae]]
+name = "gh"
+
+[[homebrew.formulae]]
+name = "cocoapods"
+
+[[homebrew.formulae]]
+name = "starship"
+
+[[homebrew.casks]]
+name = "flutter"
+
+[[homebrew.casks]]
+name = "android-studio"
+
+[[homebrew.casks]]
+name = "iterm2"
+
+[flutter]
+channel = "stable"
+
+[shell]
+default_shell = "/bin/zsh"
+prompt = "starship"

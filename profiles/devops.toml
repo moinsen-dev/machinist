@@ -1,0 +1,37 @@
+[meta]
+source_hostname = "profile:devops"
+machinist_version = "profile"
+
+[homebrew]
+taps = ["homebrew/core", "homebrew/cask"]
+
+[[homebrew.formulae]]
+name = "git"
+
+[[homebrew.formulae]]
+name = "gh"
+
+[[homebrew.formulae]]
+name = "awscli"
+
+[[homebrew.formulae]]
+name = "kubectl"
+
+[[homebrew.formulae]]
+name = "helm"
+
+[[homebrew.formulae]]
+name = "terraform"
+
+[[homebrew.formulae]]
+name = "starship"
+
+[[homebrew.casks]]
+name = "docker"
+
+[[homebrew.casks]]
+name = "iterm2"
+
+[shell]
+default_shell = "/bin/zsh"
+prompt = "starship"
