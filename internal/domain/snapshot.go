@@ -250,6 +250,7 @@ type MacOSDefaultsSection struct {
 	Spotlight      *SpotlightConfig      `toml:"spotlight,omitempty"`
 	Screenshots    *ScreenshotsConfig    `toml:"screenshots,omitempty"`
 	MenuBar        *MenuBarConfig        `toml:"menu_bar,omitempty"`
+	Defaults       []MacDefault          `toml:"defaults,omitempty"`
 }
 
 // LocaleSection captures language, region, timezone, and computer name.
@@ -318,9 +319,10 @@ type FoldersSection struct {
 	Structure []string `toml:"structure,omitempty"`
 }
 
-// FontsSection captures user-installed custom fonts.
+// FontsSection captures user-installed custom fonts and Homebrew font casks.
 type FontsSection struct {
-	CustomFonts []Font `toml:"custom_fonts,omitempty"`
+	CustomFonts   []Font   `toml:"custom_fonts,omitempty"`
+	HomebrewFonts []string `toml:"homebrew_fonts,omitempty"`
 }
 
 // EnvFilesSection captures environment files (typically encrypted).
@@ -331,7 +333,7 @@ type EnvFilesSection struct {
 
 // CrontabSection captures the user's crontab entries.
 type CrontabSection struct {
-	Entries string `toml:"entries,omitempty"`
+	Entries []string `toml:"entries,omitempty"`
 }
 
 // LaunchAgentsSection captures user-level LaunchAgent plists.

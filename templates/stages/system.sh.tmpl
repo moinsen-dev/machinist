@@ -1,0 +1,67 @@
+{{define "apps"}}
+stage "Mac App Store Apps"
+
+if ! command -v mas &>/dev/null; then
+    log "Installing mas (Mac App Store CLI)..."
+    brew install mas || log "Warning: Could not install mas"
+fi
+
+{{range .InstalledApps}}
+log "Installing {{.Name}} ({{.ID}})"
+mas install {{.ID}} 2>/dev/null || log "Warning: Could not install {{.Name}}"
+{{end}}
+{{end}}
+
+{{define "fonts"}}
+stage "Fonts"
+
+{{range .HomebrewFonts}}
+log "Installing font {{.}}"
+brew install --cask "{{.}}" 2>/dev/null || true
+{{end}}
+
+{{range .CustomFonts}}
+if [ -f "configs/fonts/{{.Name}}" ]; then
+    log "Restoring font {{.Name}}"
+    cp "configs/fonts/{{.Name}}" "$HOME/Library/Fonts/"
+fi
+{{end}}
+{{end}}
+
+{{define "folders"}}
+stage "Folder Structure"
+
+{{range .Structure}}
+log "Creating ~/{{.}}"
+mkdir -p "$HOME/{{.}}"
+{{end}}
+{{end}}
+
+{{define "scheduled"}}
+stage "Scheduled Tasks"
+
+{{if .Crontab}}
+{{if .Crontab.Entries}}
+log "Restoring crontab"
+(crontab -l 2>/dev/null; cat <<'CRONTAB'
+{{range .Crontab.Entries}}
+{{.}}
+{{end}}
+CRONTAB
+) | sort -u | crontab -
+{{end}}
+{{end}}
+
+{{if .LaunchAgents}}
+{{if .LaunchAgents.Plists}}
+log "Restoring LaunchAgents"
+mkdir -p "$HOME/Library/LaunchAgents"
+{{range .LaunchAgents.Plists}}
+if [ -f "configs/{{.Source}}" ]; then
+    cp "configs/{{.Source}}" "$HOME/Library/LaunchAgents/"
+    launchctl load "$HOME/Library/LaunchAgents/$(basename "{{.Source}}")" 2>/dev/null || true
+fi
+{{end}}
+{{end}}
+{{end}}
+{{end}}

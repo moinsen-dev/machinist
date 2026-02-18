@@ -11,6 +11,7 @@ import (
 	"github.com/moinsen-dev/machinist/internal/scanner/packages"
 	"github.com/moinsen-dev/machinist/internal/scanner/runtimes"
 	"github.com/moinsen-dev/machinist/internal/scanner/shell"
+	"github.com/moinsen-dev/machinist/internal/scanner/system"
 	"github.com/moinsen-dev/machinist/internal/util"
 )
 
@@ -35,6 +36,11 @@ func newRegistry() *scanner.Registry {
 	reg.Register(runtimes.NewRustScanner(cmd))
 	reg.Register(editors.NewVSCodeScanner(homeDir, cmd))
 	reg.Register(editors.NewCursorScanner(homeDir, cmd))
+	reg.Register(system.NewMacOSDefaultsScanner(cmd))
+	reg.Register(system.NewFontsScanner(homeDir, cmd))
+	reg.Register(system.NewFoldersScanner(homeDir))
+	reg.Register(system.NewScheduledScanner(homeDir, cmd))
+	reg.Register(system.NewAppsScanner(cmd))
 	return reg
 }
 
@@ -63,5 +69,23 @@ func applyResultToSnapshot(snap *domain.Snapshot, result *scanner.ScanResult) {
 	}
 	if result.Cursor != nil {
 		snap.Cursor = result.Cursor
+	}
+	if result.MacOSDefaults != nil {
+		snap.MacOSDefaults = result.MacOSDefaults
+	}
+	if result.Fonts != nil {
+		snap.Fonts = result.Fonts
+	}
+	if result.Folders != nil {
+		snap.Folders = result.Folders
+	}
+	if result.Crontab != nil {
+		snap.Crontab = result.Crontab
+	}
+	if result.LaunchAgents != nil {
+		snap.LaunchAgents = result.LaunchAgents
+	}
+	if result.Apps != nil {
+		snap.Apps = result.Apps
 	}
 }

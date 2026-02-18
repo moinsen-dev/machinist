@@ -30,6 +30,11 @@ type ScanResult struct {
 	Cursor        *domain.CursorSection
 	Docker        *domain.DockerSection
 	MacOSDefaults *domain.MacOSDefaultsSection
+	Folders       *domain.FoldersSection
+	Fonts         *domain.FontsSection
+	Crontab       *domain.CrontabSection
+	LaunchAgents  *domain.LaunchAgentsSection
+	Apps          *domain.AppsSection
 }
 
 // Scanner is the interface that all scanners must implement.
@@ -156,5 +161,20 @@ func applyResult(snap *domain.Snapshot, result *ScanResult) {
 	}
 	if result.MacOSDefaults != nil {
 		snap.MacOSDefaults = result.MacOSDefaults
+	}
+	if result.Folders != nil {
+		snap.Folders = result.Folders
+	}
+	if result.Fonts != nil {
+		snap.Fonts = result.Fonts
+	}
+	if result.Crontab != nil {
+		snap.Crontab = result.Crontab
+	}
+	if result.LaunchAgents != nil {
+		snap.LaunchAgents = result.LaunchAgents
+	}
+	if result.Apps != nil {
+		snap.Apps = result.Apps
 	}
 }

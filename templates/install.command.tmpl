@@ -50,6 +50,26 @@ log "machinist restore started"
 {{template "cursor" .Cursor}}
 {{end}}
 
+{{if .MacOSDefaults}}
+{{template "macos-defaults" .MacOSDefaults}}
+{{end}}
+
+{{if .Apps}}
+{{template "apps" .Apps}}
+{{end}}
+
+{{if .Fonts}}
+{{template "fonts" .Fonts}}
+{{end}}
+
+{{if .Folders}}
+{{template "folders" .Folders}}
+{{end}}
+
+{{if or .Crontab .LaunchAgents}}
+{{template "scheduled" .}}
+{{end}}
+
 log "machinist restore completed"
 echo ""
 echo "✓ Restore complete. Check $LOGFILE for details."

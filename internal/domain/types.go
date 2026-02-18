@@ -86,21 +86,25 @@ type DockConfig struct {
 	AutoHide       bool   `toml:"autohide,omitempty"`
 	TileSize       int    `toml:"tilesize,omitempty"`
 	Orientation    string `toml:"orientation,omitempty"`
+	Magnification  bool   `toml:"magnification,omitempty"`
+	ShowRecents    bool   `toml:"show_recents,omitempty"`
 	MinimizeEffect string `toml:"minimize_effect,omitempty"`
 }
 
 // FinderConfig represents macOS Finder preferences.
 type FinderConfig struct {
-	ShowHidden    bool   `toml:"show_hidden,omitempty"`
-	ShowPathBar   bool   `toml:"show_path_bar,omitempty"`
-	ShowStatusBar bool   `toml:"show_status_bar,omitempty"`
-	DefaultView   string `toml:"default_view,omitempty"`
+	ShowHidden         bool   `toml:"show_hidden,omitempty"`
+	ShowPathBar        bool   `toml:"show_path_bar,omitempty"`
+	ShowStatusBar      bool   `toml:"show_status_bar,omitempty"`
+	DefaultView        string `toml:"default_view,omitempty"`
+	DefaultSearchScope string `toml:"default_search_scope,omitempty"`
 }
 
 // KeyboardConfig represents macOS keyboard preferences.
 type KeyboardConfig struct {
-	KeyRepeat        int `toml:"key_repeat,omitempty"`
-	InitialKeyRepeat int `toml:"initial_key_repeat,omitempty"`
+	KeyRepeat              int  `toml:"key_repeat,omitempty"`
+	InitialKeyRepeat       int  `toml:"initial_key_repeat,omitempty"`
+	ApplePressAndHoldEnabled bool `toml:"apple_press_and_hold_enabled,omitempty"`
 }
 
 // TrackpadConfig represents macOS trackpad preferences.
