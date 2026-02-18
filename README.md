@@ -8,7 +8,7 @@ Scan. Bundle. Restore. Identical dev setup in minutes.
 
 A developer buys a new Mac. Instead of spending days installing tools, copying shell configs, and cloning repos, they run **one DMG** — and have an identical working environment in 20 minutes.
 
-**machinist** is a Rust CLI tool that:
+**machinist** is a Go CLI tool that:
 
 1. **Scans** your current Mac (dev tools, system settings, repos, configs)
 2. **Generates** a structured TOML manifest of everything found
@@ -47,27 +47,82 @@ machinist is **not a backup tool** — it's a setup automator. The DMG contains 
 ## Usage
 
 ```bash
-# Full snapshot → DMG
+# Snapshot — capture your existing system
 machinist snapshot
 machinist snapshot --output ~/Desktop/machinist.dmg
-machinist snapshot --interactive          # Ask per scanner what to include/exclude
-machinist snapshot --dry-run              # Show what would be captured without exporting
+machinist snapshot --interactive
+machinist snapshot --dry-run
 
-# Run individual scanners (debug/inspect)
+# Scan — run individual scanners
 machinist scan homebrew
 machinist scan shell
 machinist scan git-repos --search-paths ~/Code,~/Projects
 
-# Restore (on new Mac, from mounted DMG)
-machinist restore                         # Reads machinist.toml from current directory
-machinist restore --skip homebrew,fonts   # Skip specific scanners
-machinist restore --dry-run               # Show what would be installed
-machinist restore --only shell,git,ssh    # Restore only specific categories
+# Compose — build a setup from a profile (AI or manual)
+machinist compose --from profile://flutter-ios
+machinist compose --from profile://fullstack-js --add docker,postgres
+machinist compose --from manifest.toml --output setup.dmg
+
+# Restore — on a new Mac, from mounted DMG
+machinist restore
+machinist restore --skip homebrew,fonts
+machinist restore --dry-run
+machinist restore --only shell,git,ssh
+
+# MCP Server — let AI tools drive machinist
+machinist serve                           # stdio (Claude Code, Cursor)
+machinist serve --port 3333               # SSE (Claude Desktop, web clients)
 
 # Info
-machinist list-scanners                   # Show all available scanners
+machinist list-scanners
+machinist list-profiles
 machinist version
 ```
+
+## AI-Powered Setup
+
+machinist includes an **MCP (Model Context Protocol) server**, allowing any MCP-compatible AI to compose and build Mac setups interactively.
+
+```
+User → AI: "I'm a Flutter developer, I work with Firebase and Docker,
+            and I use VS Code."
+
+AI calls machinist MCP tools:
+  1. list_profiles()              → finds "flutter-ios" as base
+  2. compose_manifest(            → adds Docker, Firebase, VS Code extensions
+       base: "flutter-ios",
+       add: ["docker", "firebase"])
+  3. build_dmg(manifest)          → generates the DMG
+
+User runs DMG on new Mac → done.
+```
+
+Configure in Claude Code or Claude Desktop:
+
+```json
+{
+  "mcpServers": {
+    "machinist": {
+      "command": "machinist",
+      "args": ["serve"]
+    }
+  }
+}
+```
+
+### Built-in Profiles
+
+| Profile | Description |
+|---|---|
+| `minimal` | Homebrew, Git, zsh+starship, VS Code |
+| `fullstack-js` | Node.js, pnpm, Docker, Postgres, VS Code |
+| `flutter-ios` | Flutter, Xcode, Simulators, CocoaPods |
+| `python-data` | Python, Jupyter, conda, Docker |
+| `rust-dev` | Rust, rustup+nightly, cargo tools |
+| `go-dev` | Go, Docker, Postgres, VS Code |
+| `devops` | Docker, Kubernetes, Terraform, AWS/GCP CLI |
+
+Profiles are composable — use them as a base and add/remove packages as needed.
 
 ## What Gets Captured
 
@@ -140,27 +195,27 @@ Data is categorized into three sensitivity levels:
 
 ## Architecture
 
-- **Rust** for scanner + bundler — fast, type-safe, single binary
-- **Shell script** for restore — must run on vanilla Mac without Rust
-- **TOML** for manifest — human-readable, human-editable
-- **age** for encryption — modern, simple, no GPG overhead
+- **Go** for scanner + bundler — fast compilation, excellent `os/exec` for shell commands, single binary, `text/template` in stdlib
+- **Shell script** for restore — must run on vanilla Mac without Go
+- **TOML** for manifest — human-readable, human-editable (BurntSushi/toml)
+- **filippo.io/age** for encryption — the reference implementation, written in Go
 - **hdiutil** for DMG — macOS-native, no extra dependency
-- **Handlebars** templates for restore script generation
+- **cobra** for CLI — de-facto standard for Go CLIs (used by kubectl, gh, docker)
+- **text/template** (stdlib) for restore script generation
 
 ## Development
 
 ```bash
 # Build
-cargo build
+go build ./cmd/machinist
 
 # Run
-cargo run -- snapshot --dry-run
-cargo run -- scan homebrew
-cargo run -- list-scanners
+go run ./cmd/machinist snapshot --dry-run
+go run ./cmd/machinist scan homebrew
+go run ./cmd/machinist list-scanners
 
 # Test
-cargo test
-cargo nextest run
+go test ./...
 ```
 
 ## License

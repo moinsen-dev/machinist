@@ -1,0 +1,31 @@
+{{define "homebrew"}}
+stage "Homebrew"
+
+# Install Homebrew if not present
+if ! command -v brew &>/dev/null; then
+    log "Installing Homebrew..."
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+fi
+
+{{range .Taps}}
+log "Tapping {{.}}"
+brew tap {{.}} 2>/dev/null || true
+{{end}}
+
+{{range .Formulae}}
+log "Installing formula {{.Name}}"
+brew list {{.Name}} &>/dev/null || brew install {{.Name}}
+{{end}}
+
+{{range .Casks}}
+log "Installing cask {{.Name}}"
+brew list --cask {{.Name}} &>/dev/null || brew install --cask {{.Name}}
+{{end}}
+
+{{range .Services}}
+{{if eq .Status "started"}}
+log "Starting service {{.Name}}"
+brew services start {{.Name}} 2>/dev/null || true
+{{end}}
+{{end}}
+{{end}}

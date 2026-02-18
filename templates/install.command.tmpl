@@ -1,0 +1,31 @@
+#!/bin/bash
+set -euo pipefail
+
+# machinist restore script
+# Generated: {{.Meta.CreatedAt}}
+# Source: {{.Meta.SourceHostname}} ({{.Meta.SourceOSVersion}}, {{.Meta.SourceArch}})
+
+LOGFILE="$HOME/.machinist/restore.log"
+mkdir -p "$(dirname "$LOGFILE")"
+
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOGFILE"
+}
+
+stage() {
+    log "=== Stage: $1 ==="
+}
+
+log "machinist restore started"
+
+{{if .Homebrew}}
+{{template "homebrew" .Homebrew}}
+{{end}}
+
+{{if .Shell}}
+{{template "shell" .Shell}}
+{{end}}
+
+log "machinist restore completed"
+echo ""
+echo "✓ Restore complete. Check $LOGFILE for details."

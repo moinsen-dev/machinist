@@ -9,7 +9,7 @@
 
 Ein Entwickler kauft sich einen neuen Mac. Statt tagelang Tools zu installieren, Shell-Configs zu kopieren und Repos zu klonen, führt er **ein DMG** aus – und hat nach 20 Minuten eine identische Arbeitsumgebung.
 
-**machinist** ist ein Rust-CLI-Tool, das:
+**machinist** ist ein Go-CLI-Tool, das:
 1. Den aktuellen Mac vollständig scannt (Dev-Tools, System-Settings, Repos, Configs)
 2. Einen strukturierten Snapshot als TOML-Manifest erzeugt
 3. Diesen Snapshot + alle Config-Files in ein DMG bündelt
@@ -49,30 +49,58 @@ Ein Entwickler kauft sich einen neuen Mac. Statt tagelang Tools zu installieren,
 | Entity | Beschreibung |
 |---|---|
 | **Snapshot** | Gesamtbild einer Maschine — enthält alle ScanResults |
-| **Scanner** | Trait — jeder Scanner ist für eine Domain zuständig |
+| **Scanner** | Interface — jeder Scanner ist für eine Domain zuständig |
 | **ScanResult** | Was ein Scanner gefunden hat (Packages, Configs, etc.) |
 | **Manifest** | Serialisierbare TOML-Repräsentation des Snapshots |
 | **Bundler** | Nimmt Manifest + gesammelte Files, erzeugt DMG |
-| **RestoreScript** | Generiertes Shell-Script, das den Snapshot wiederherstellt |
+| **RestoreScript** | Generiertes Shell-Script (via `text/template`), das den Snapshot wiederherstellt |
 
 ### Value Objects
 
-```rust
-Package       { name, version, source: PackageSource }
-Repository    { path, remote_url, branch, shallow: bool }
-ConfigFile    { source_path, category, content_hash }
-MacDefault    { domain, key, value, value_type }
-InstalledApp  { name, source: AppSource, bundle_id: Option }
-Font          { name, file_path }
-CronJob       { schedule, command, source: CronSource }
-EnvFile       { path, encrypted: bool }
+```go
+type Package struct {
+    Name    string        `toml:"name"`
+    Version string        `toml:"version"`
+    Source  PackageSource `toml:"source"`
+}
+
+type Repository struct {
+    Path      string `toml:"path"`
+    RemoteURL string `toml:"remote_url"`
+    Branch    string `toml:"branch"`
+    Shallow   bool   `toml:"shallow"`
+}
+
+type ConfigFile struct {
+    SourcePath  string `toml:"source"`
+    BundlePath  string `toml:"bundle_path"`
+    ContentHash string `toml:"content_hash,omitempty"`
+    Encrypted   bool   `toml:"encrypted,omitempty"`
+}
+
+type MacDefault struct {
+    Domain    string `toml:"domain"`
+    Key       string `toml:"key"`
+    Value     string `toml:"value"`
+    ValueType string `toml:"value_type"`
+}
+
+type InstalledApp struct {
+    Name     string `toml:"name"`
+    Source   string `toml:"source"`
+    BundleID string `toml:"bundle_id,omitempty"`
+}
+
+type Font     struct { Name string; FilePath string }
+type CronJob  struct { Schedule string; Command string; Source string }
+type EnvFile  struct { Path string; Encrypted bool }
 ```
 
 ---
 
 ## 3. Scanner-Module
 
-Jeder Scanner implementiert den `Scanner`-Trait und ist unabhängig testbar.
+Jeder Scanner implementiert das `Scanner`-Interface und ist unabhängig testbar.
 Scanner sind in **Kategorien** organisiert, jede Kategorie kann mehrere Sub-Scanner haben.
 
 ### 3.1 Package Managers & Runtimes
@@ -293,26 +321,163 @@ custom_paths = [
 ## 4. CLI Interface
 
 ```bash
-# Vollständiger Snapshot → DMG
+# ─── SNAPSHOT (bestehendes System erfassen) ───────────────
 machinist snapshot
 machinist snapshot --output ~/Desktop/machinist.dmg
 machinist snapshot --interactive          # Fragt pro Scanner nach Include/Exclude
 machinist snapshot --dry-run              # Zeigt was erfasst würde, ohne zu exportieren
 
-# Einzelne Scanner ausführen (Debug/Inspect)
+# ─── SCAN (einzelne Scanner) ─────────────────────────────
 machinist scan homebrew
 machinist scan shell
 machinist scan git-repos --search-paths ~/Code,~/Projects
 
-# Restore (auf neuem Mac, vom DMG aus)
+# ─── COMPOSE (neues System zusammenstellen) ───────────────
+machinist compose --from profile://flutter-ios
+machinist compose --from manifest.toml --output setup.dmg
+machinist compose --from profile://fullstack-js --add docker,postgres --skip xcode
+
+# ─── RESTORE (auf neuem Mac, vom DMG aus) ────────────────
 machinist restore                         # Liest machinist.toml aus aktuellem Verzeichnis
 machinist restore --skip homebrew,fonts   # Bestimmte Scanner überspringen
 machinist restore --dry-run               # Zeigt was installiert würde
 
-# Info
+# ─── MCP SERVER ──────────────────────────────────────────
+machinist serve                           # Startet MCP Server (stdio transport)
+machinist serve --port 3333               # Startet MCP Server (SSE transport)
+
+# ─── INFO ─────────────────────────────────────────────────
 machinist list-scanners                   # Zeigt alle verfügbaren Scanner
+machinist list-profiles                   # Zeigt verfügbare Preset-Profile
 machinist version
 ```
+
+---
+
+## 4.1 MCP Server
+
+machinist kann als **MCP (Model Context Protocol) Server** laufen. Damit kann jede MCP-fähige KI (Claude Code, Claude Desktop, Cursor, etc.) machinist als Tool nutzen — um bestehende Macs zu scannen oder neue Setups zusammenzustellen.
+
+### Transport
+
+```bash
+# stdio (für Claude Code, Cursor, etc.)
+machinist serve
+
+# SSE (für Claude Desktop, Web-Clients)
+machinist serve --port 3333
+```
+
+### MCP Server Config (claude_desktop_config.json / settings.json)
+
+```json
+{
+  "mcpServers": {
+    "machinist": {
+      "command": "machinist",
+      "args": ["serve"]
+    }
+  }
+}
+```
+
+### MCP Tools
+
+Der Server stellt folgende Tools bereit:
+
+| Tool | Beschreibung | Parameter |
+|---|---|---|
+| `list_scanners` | Listet alle verfügbaren Scanner mit Beschreibung | — |
+| `list_profiles` | Listet verfügbare Preset-Profile (flutter-ios, fullstack-js, data-science...) | — |
+| `get_profile` | Gibt ein Profil als TOML-Manifest zurück | `name: string` |
+| `scan` | Führt einen oder mehrere Scanner aus und gibt Ergebnis zurück | `scanners: string[]`, `search_paths?: string[]` |
+| `scan_all` | Vollständiger Scan des aktuellen Systems | `dry_run?: bool` |
+| `compose_manifest` | Erzeugt ein Manifest aus Beschreibung/Profil + Overrides | `base_profile?: string`, `add?: string[]`, `remove?: string[]`, `overrides?: object` |
+| `validate_manifest` | Prüft ein Manifest auf Konsistenz und fehlende Dependencies | `manifest: string` |
+| `build_dmg` | Erzeugt DMG aus einem Manifest | `manifest: string`, `output?: string`, `encrypt?: bool` |
+| `diff_manifests` | Vergleicht zwei Manifeste (z.B. aktueller Mac vs gewünschtes Setup) | `a: string`, `b: string` |
+
+### MCP Resources
+
+| Resource | URI | Beschreibung |
+|---|---|---|
+| Aktuelles System | `machinist://system/snapshot` | Live-Snapshot des aktuellen Systems |
+| Profil | `machinist://profiles/{name}` | Preset-Profil als TOML |
+| Scanner-Info | `machinist://scanners/{name}` | Details zu einem Scanner |
+
+### Typischer AI-Workflow
+
+```
+User → KI: "Ich bin iOS-Entwickler, arbeite mit Flutter und Firebase,
+            nutze VS Code und brauche Docker für Backend-Tests."
+
+KI:
+  1. list_profiles()           → findet "flutter-ios" als Basis
+  2. get_profile("flutter-ios") → liest Basis-Manifest
+  3. compose_manifest(
+       base_profile: "flutter-ios",
+       add: ["docker", "firebase", "vscode"],
+       overrides: {
+         docker: { images: ["postgres:16-alpine", "redis:7-alpine"] },
+         vscode: { extensions: ["firebase-explorer", "docker"] }
+       }
+     )                         → erzeugt finales Manifest
+  4. validate_manifest(...)    → prüft auf Konflikte
+  5. → Zeigt User das Manifest, fragt nach Bestätigung
+  6. build_dmg(manifest, output: "~/Desktop/flutter-ios-setup.dmg")
+
+User: Führt DMG auf neuem Mac aus → fertig.
+```
+
+---
+
+## 4.2 Profiles (Preset-Manifeste)
+
+Profiles sind vorgefertigte Manifeste für typische Entwickler-Setups. Sie dienen als Basis, die von der KI oder dem User angepasst werden können.
+
+### Mitgelieferte Profiles
+
+| Profile | Beschreibung | Kern-Inhalte |
+|---|---|---|
+| `minimal` | Basis-Dev-Setup | Homebrew, Git, zsh+starship, VSCode |
+| `fullstack-js` | JavaScript/TypeScript Fullstack | Node.js, pnpm, Docker, Postgres, VSCode, ESLint, Prettier |
+| `flutter-ios` | Flutter + iOS Development | Flutter, Xcode, Simulators, CocoaPods, VSCode+Android Studio |
+| `flutter-android` | Flutter + Android | Flutter, Android Studio, Java (SDKMAN), VSCode |
+| `python-data` | Data Science / ML | Python (uv), Jupyter, conda, Docker, VSCode |
+| `python-web` | Python Backend | Python (uv), Docker, Postgres, Redis, VSCode |
+| `rust-dev` | Rust Development | Rust (rustup+nightly), cargo tools, Neovim/VSCode |
+| `go-dev` | Go Development | Go, Docker, Postgres, VSCode |
+| `devops` | DevOps / Platform Engineering | Docker, Kubernetes, Terraform, AWS/GCP CLI, Helm |
+| `mobile-native` | iOS + Android Native | Xcode, Android Studio, Java, CocoaPods, fastlane |
+
+### Profile-Format
+
+Profiles sind reguläre `machinist.toml`-Manifeste mit einem zusätzlichen `[profile]`-Header:
+
+```toml
+[profile]
+name = "flutter-ios"
+description = "Flutter + iOS Development Environment"
+tags = ["mobile", "flutter", "ios", "dart"]
+base = "minimal"              # Erbt von diesem Profil (optional)
+
+[homebrew]
+formulae = [
+    { name = "cocoapods" },
+    { name = "fastlane" },
+]
+casks = [
+    { name = "flutter" },
+    { name = "android-studio" },
+    { name = "visual-studio-code" },
+]
+# ... rest des Manifests
+```
+
+Profiles werden:
+1. Mit dem Binary ausgeliefert (via `go:embed`)
+2. Können vom User erweitert werden (`~/.machinist/profiles/`)
+3. Können von der KI on-the-fly generiert werden
 
 ---
 
@@ -799,200 +964,204 @@ Stage 31 generiert eine Checkliste mit Dingen die **nicht automatisierbar** sind
 
 | Entscheidung | Begründung |
 |---|---|
-| **Rust für Scanner + Bundler** | Schnell, typsicher, gutes macOS Ecosystem, single binary |
-| **Shell-Script für Restore** | Muss auf Vanilla-Mac laufen ohne Rust/Cargo |
-| **TOML als Manifest** | Human-readable, human-editable, Rust-native (serde) |
-| **age für Encryption** | Modern, simpel, kein GPG-Overhead |
-| **Modulare Scanner** | Jeder Scanner unabhängig, leicht erweiterbar |
+| **Go für Scanner + Bundler** | Schnelle Compile-Zeiten, exzellentes `os/exec` für Shell-Commands, single binary, `text/template` in stdlib |
+| **Go statt Rust** | machinist ist ein Script-Orchestrator (Shell-Commands + File-IO), kein Performance-kritisches System. Go bietet höhere Entwicklungsgeschwindigkeit bei gleicher Ergebnisqualität |
+| **Shell-Script für Restore** | Muss auf Vanilla-Mac laufen ohne Go-Runtime (Go compiliert statisch — aber Shell ist universeller) |
+| **TOML als Manifest** | Human-readable, human-editable (BurntSushi/toml) |
+| **filippo.io/age für Encryption** | Referenz-Implementierung von age, nativ in Go geschrieben |
+| **Modulare Scanner** | Jeder Scanner implementiert ein Go-Interface, unabhängig testbar |
 | **hdiutil für DMG** | macOS-native, kein extra Dependency |
+| **cobra für CLI** | De-facto Standard für Go CLIs (kubectl, gh, docker) |
 
 ---
 
-## 10. Rust Project Structure
+## 10. Go Project Structure
 
-Scanner sind in Submodule nach Kategorie gruppiert — hält die Codebase übersichtlich.
+Scanner sind in Packages nach Kategorie gruppiert — hält die Codebase übersichtlich.
+Go-Konvention: `internal/` für nicht-exportierte Packages, `cmd/` für Binaries.
 
 ```
 machinist/
-├── Cargo.toml
-├── src/
-│   ├── main.rs                         # CLI entry point (clap)
-│   ├── lib.rs                          # Public API
-│   │
-│   ├── cli/
-│   │   ├── mod.rs
-│   │   ├── snapshot.rs                 # snapshot subcommand
-│   │   ├── scan.rs                     # scan subcommand
-│   │   └── restore.rs                  # restore subcommand (lokales Testing)
-│   │
+├── go.mod
+├── go.sum
+├── cmd/
+│   └── machinist/
+│       └── main.go                     # CLI entry point (cobra)
+│
+├── mcp/
+│   ├── server.go                       # MCP Server (stdio + SSE transport)
+│   ├── tools.go                        # MCP Tool-Definitionen (list_scanners, scan, compose, build_dmg...)
+│   └── resources.go                    # MCP Resource-Provider (system/snapshot, profiles)
+│
+├── internal/
 │   ├── domain/
-│   │   ├── mod.rs
-│   │   ├── snapshot.rs                 # Snapshot aggregate
-│   │   ├── manifest.rs                 # TOML serialization/deserialization
-│   │   ├── package.rs                  # Package, AppSource, PackageSource
-│   │   ├── repository.rs              # Repository value object
-│   │   ├── config_file.rs             # ConfigFile value object
-│   │   ├── mac_default.rs             # MacDefault value object
-│   │   └── sensitivity.rs             # Sensitivity levels (public, sensitive, secret)
+│   │   ├── snapshot.go                 # Snapshot aggregate
+│   │   ├── manifest.go                 # TOML serialization/deserialization
+│   │   ├── types.go                    # Package, Repository, ConfigFile, MacDefault etc.
+│   │   └── sensitivity.go              # Sensitivity levels (public, sensitive, secret)
 │   │
 │   ├── scanner/
-│   │   ├── mod.rs                      # Scanner trait + ScannerRegistry
-│   │   ├── trait.rs                    # Scanner trait definition
+│   │   ├── scanner.go                  # Scanner interface + Registry
 │   │   │
 │   │   ├── packages/                   # Package Managers & Runtimes
-│   │   │   ├── mod.rs
-│   │   │   ├── homebrew.rs
-│   │   │   ├── node.rs                 # nvm/fnm + npm/pnpm globals
-│   │   │   ├── python.rs              # pyenv/uv + pip globals
-│   │   │   ├── rust_lang.rs           # rustup + cargo
-│   │   │   ├── java.rs                # sdkman
-│   │   │   ├── flutter.rs             # Flutter/Dart
-│   │   │   ├── go.rs
-│   │   │   ├── ruby.rs
-│   │   │   ├── deno.rs
-│   │   │   ├── bun.rs
-│   │   │   └── asdf.rs                # asdf/mise universal version manager
+│   │   │   ├── homebrew.go
+│   │   │   ├── node.go                 # nvm/fnm + npm/pnpm globals
+│   │   │   ├── python.go               # pyenv/uv + pip globals
+│   │   │   ├── rustlang.go             # rustup + cargo
+│   │   │   ├── java.go                 # sdkman
+│   │   │   ├── flutter.go              # Flutter/Dart
+│   │   │   ├── golang.go
+│   │   │   ├── ruby.go
+│   │   │   ├── deno.go
+│   │   │   ├── bun.go
+│   │   │   └── asdf.go                 # asdf/mise universal version manager
 │   │   │
 │   │   ├── shell/                      # Shell & Terminal
-│   │   │   ├── mod.rs
-│   │   │   ├── config.rs              # .zshrc, .zshenv, etc.
-│   │   │   ├── framework.rs           # oh-my-zsh, prezto
-│   │   │   ├── prompt.rs              # starship, p10k
-│   │   │   ├── terminal.rs            # iTerm2, Warp, Alacritty
-│   │   │   ├── tmux.rs
-│   │   │   └── direnv.rs
+│   │   │   ├── config.go               # .zshrc, .zshenv, etc.
+│   │   │   ├── framework.go            # oh-my-zsh, prezto
+│   │   │   ├── prompt.go               # starship, p10k
+│   │   │   ├── terminal.go             # iTerm2, Warp, Alacritty
+│   │   │   ├── tmux.go
+│   │   │   └── direnv.go
 │   │   │
 │   │   ├── git/                        # Git & Version Control
-│   │   │   ├── mod.rs
-│   │   │   ├── config.rs              # .gitconfig, signing, templates
-│   │   │   ├── repos.rs               # Repository discovery + manifest
-│   │   │   └── github_cli.rs          # gh CLI config + extensions
+│   │   │   ├── config.go               # .gitconfig, signing, templates
+│   │   │   ├── repos.go                # Repository discovery + manifest
+│   │   │   └── githubcli.go            # gh CLI config + extensions
 │   │   │
 │   │   ├── editors/                    # Editors & IDEs
-│   │   │   ├── mod.rs
-│   │   │   ├── vscode.rs              # VSCode + snippets + profiles
-│   │   │   ├── cursor.rs
-│   │   │   ├── jetbrains.rs           # IntelliJ, PyCharm, Android Studio
-│   │   │   ├── neovim.rs
-│   │   │   └── xcode.rs
+│   │   │   ├── vscode.go               # VSCode + snippets + profiles
+│   │   │   ├── cursor.go
+│   │   │   ├── jetbrains.go            # IntelliJ, PyCharm, Android Studio
+│   │   │   ├── neovim.go
+│   │   │   └── xcode.go
 │   │   │
 │   │   ├── containers/                 # Container & Virtualization
-│   │   │   ├── mod.rs
-│   │   │   └── docker.rs              # Docker, Colima, OrbStack
+│   │   │   └── docker.go               # Docker, Colima, OrbStack
 │   │   │
 │   │   ├── cloud/                      # Cloud & DevOps
-│   │   │   ├── mod.rs
-│   │   │   ├── aws.rs
-│   │   │   ├── gcp.rs
-│   │   │   ├── kubernetes.rs
-│   │   │   └── generic.rs             # Vercel, Fly, Firebase, Terraform etc.
+│   │   │   ├── aws.go
+│   │   │   ├── gcp.go
+│   │   │   ├── kubernetes.go
+│   │   │   └── generic.go              # Vercel, Fly, Firebase, Terraform etc.
 │   │   │
 │   │   ├── system/                     # macOS System
-│   │   │   ├── mod.rs
-│   │   │   ├── defaults.rs            # Dock, Finder, Keyboard, Trackpad, Screenshots, Menu Bar
-│   │   │   ├── locale.rs              # Sprache, Region, Timezone, ComputerName
-│   │   │   ├── network.rs             # Wi-Fi, VPN, DNS, Proxy
-│   │   │   ├── apps.rs                # App Store via mas
-│   │   │   ├── login_items.rs
-│   │   │   ├── hosts.rs               # /etc/hosts
-│   │   │   ├── fonts.rs
-│   │   │   └── scheduled.rs           # crontab + LaunchAgents
+│   │   │   ├── defaults.go             # Dock, Finder, Keyboard, Trackpad, Screenshots, Menu Bar
+│   │   │   ├── locale.go               # Sprache, Region, Timezone, ComputerName
+│   │   │   ├── network.go              # Wi-Fi, VPN, DNS, Proxy
+│   │   │   ├── apps.go                 # App Store via mas
+│   │   │   ├── loginitems.go
+│   │   │   ├── hosts.go                # /etc/hosts
+│   │   │   ├── fonts.go
+│   │   │   └── scheduled.go            # crontab + LaunchAgents
 │   │   │
 │   │   ├── security/                   # Security & Credentials
-│   │   │   ├── mod.rs
-│   │   │   ├── ssh.rs
-│   │   │   └── gpg.rs
+│   │   │   ├── ssh.go
+│   │   │   └── gpg.go
 │   │   │
 │   │   ├── productivity/               # Power User Tools
-│   │   │   ├── mod.rs
-│   │   │   ├── raycast.rs
-│   │   │   ├── karabiner.rs
-│   │   │   ├── window_manager.rs      # Rectangle, Magnet, BetterTouchTool
-│   │   │   ├── browser.rs             # Default Browser, Extensions-Liste
-│   │   │   └── api_tools.rs           # Postman, ngrok, mkcert
+│   │   │   ├── raycast.go
+│   │   │   ├── karabiner.go
+│   │   │   ├── windowmanager.go         # Rectangle, Magnet, BetterTouchTool
+│   │   │   ├── browser.go              # Default Browser, Extensions-Liste
+│   │   │   └── apitools.go             # Postman, ngrok, mkcert
 │   │   │
-│   │   ├── ai_tools/                   # AI Developer Tools
-│   │   │   ├── mod.rs
-│   │   │   ├── claude_code.rs         # ~/.claude/ Config
-│   │   │   └── ollama.rs              # Modell-Liste
+│   │   ├── aitools/                    # AI Developer Tools
+│   │   │   ├── claudecode.go            # ~/.claude/ Config
+│   │   │   └── ollama.go               # Modell-Liste
 │   │   │
-│   │   ├── xdg_config.rs              # Generic ~/.config/ catch-all scanner
-│   │   ├── registries.rs              # .npmrc, pip.conf, cargo config
-│   │   ├── databases.rs               # pgpass, psqlrc, TablePlus
-│   │   ├── workspace.rs               # Folders + env files
-│   │   └── env_files.rs               # .env file collection (encrypted)
+│   │   ├── xdgconfig.go                # Generic ~/.config/ catch-all scanner
+│   │   ├── registries.go               # .npmrc, pip.conf, cargo config
+│   │   ├── databases.go                # pgpass, psqlrc, TablePlus
+│   │   ├── workspace.go                # Folders + env files
+│   │   └── envfiles.go                 # .env file collection (encrypted)
 │   │
 │   ├── bundler/
-│   │   ├── mod.rs
-│   │   ├── collector.rs               # Sammelt alle Config-Files in staging dir
-│   │   ├── dmg.rs                     # DMG creation via hdiutil
-│   │   ├── restore_script.rs          # Shell-Script Generator (Handlebars)
-│   │   └── encryption.rs              # age encryption wrapper
+│   │   ├── collector.go                # Sammelt alle Config-Files in staging dir
+│   │   ├── dmg.go                      # DMG creation via hdiutil
+│   │   ├── restorescript.go            # Shell-Script Generator (text/template)
+│   │   └── encryption.go              # age encryption wrapper (filippo.io/age)
 │   │
 │   └── util/
-│       ├── mod.rs
-│       ├── command.rs                  # Shell command execution helpers
-│       ├── progress.rs                 # Progress bar / spinner helpers
-│       ├── detection.rs                # Tool detection (is_installed, find_version)
-│       └── path.rs                     # Path expansion, home dir helpers
+│       ├── command.go                   # Shell command execution helpers
+│       ├── progress.go                  # Progress bar / spinner helpers
+│       ├── detection.go                 # Tool detection (IsInstalled, FindVersion)
+│       └── path.go                      # Path expansion, home dir helpers
 │
 ├── templates/
-│   ├── install.command.hbs             # Handlebars template für Restore-Script
+│   ├── install.command.tmpl            # Go text/template für Restore-Script
 │   ├── stages/                         # Sub-Templates pro Restore-Stage
-│   │   ├── homebrew.sh.hbs
-│   │   ├── shell.sh.hbs
-│   │   ├── runtimes.sh.hbs
+│   │   ├── homebrew.sh.tmpl
+│   │   ├── shell.sh.tmpl
+│   │   ├── runtimes.sh.tmpl
 │   │   └── ...
-│   └── README.md.hbs                  # Template für DMG-README
+│   ├── checklist.md.tmpl               # Template für Post-Restore Checkliste
+│   └── README.md.tmpl                  # Template für DMG-README
+│
+├── profiles/                           # Eingebettete Preset-Profile (go:embed)
+│   ├── minimal.toml
+│   ├── fullstack-js.toml
+│   ├── flutter-ios.toml
+│   ├── flutter-android.toml
+│   ├── python-data.toml
+│   ├── python-web.toml
+│   ├── rust-dev.toml
+│   ├── go-dev.toml
+│   ├── devops.toml
+│   └── mobile-native.toml
 │
 ├── config/
 │   └── known_xdg_tools.toml           # Registry bekannter ~/.config/ Tools
 │
-└── tests/
-    ├── scanner/
-    │   ├── homebrew_test.rs
-    │   ├── shell_test.rs
-    │   └── ...
-    └── integration/
-        ├── snapshot_test.rs
-        └── manifest_roundtrip_test.rs
+└── internal/scanner/*_test.go          # Tests leben neben dem Code (Go-Konvention)
 ```
 
 ---
 
-## 11. Dependencies (Cargo.toml)
+## 11. Dependencies (go.mod)
 
-```toml
-[dependencies]
-clap = { version = "4", features = ["derive"] }
-serde = { version = "1", features = ["derive"] }
-toml = "0.8"
-walkdir = "2"
-regex = "1"
-indicatif = "0.17"          # Progress bars
-dialoguer = "0.11"           # Interactive prompts
-anyhow = "1"                 # Error handling
-thiserror = "1"              # Custom errors
-handlebars = "5"             # Template engine für restore script
-chrono = "0.4"               # Timestamps
-dirs = "5"                   # Home directory etc.
-which = "6"                  # Find executables in PATH
-tracing = "0.1"              # Logging
-tracing-subscriber = "0.3"
+```go
+module github.com/moinsen-dev/machinist
+
+go 1.23
+
+require (
+    github.com/spf13/cobra             v1.8   // CLI framework (like kubectl, gh, docker)
+    github.com/BurntSushi/toml          v1.3   // TOML parsing/writing
+    filippo.io/age                      v1.2   // age encryption (Referenz-Implementierung)
+    github.com/charmbracelet/bubbletea  v1.2   // Terminal UI (interactive mode)
+    github.com/charmbracelet/lipgloss   v1.0   // Terminal styling
+    github.com/schollz/progressbar/v3   v3.14  // Progress bars
+    github.com/mark3labs/mcp-go         v0.17  // MCP Server SDK (stdio + SSE)
+)
 ```
+
+**Aus der Go-Stdlib (keine Dependency nötig):**
+
+| Stdlib Package | Verwendung |
+|---|---|
+| `os/exec` | Shell-Command Execution |
+| `text/template` | Restore-Script Generation |
+| `path/filepath` | Pfad-Operationen |
+| `os` | File-IO, Home-Dir |
+| `regexp` | Output-Parsing |
+| `encoding/json` | JSON-Configs lesen (VSCode, iTerm2 etc.) |
+| `crypto/sha256` | Content-Hashes für Config-Files |
+| `embed` | Templates direkt ins Binary einbetten |
+| `log/slog` | Structured Logging (seit Go 1.21) |
 
 ---
 
 ## 12. Entwicklungs-Phasen
 
 ### Phase 1 — Foundation (MVP)
-- [ ] Rust-Projekt aufsetzen (cargo init)
-- [ ] CLI-Skeleton mit clap (snapshot, scan, restore)
-- [ ] Scanner-Trait definieren
+- [ ] Go-Projekt aufsetzen (`go mod init github.com/moinsen-dev/machinist`)
+- [ ] CLI-Skeleton mit cobra (snapshot, scan, restore, list-scanners)
+- [ ] Scanner-Interface definieren
 - [ ] Homebrew-Scanner implementieren
 - [ ] Shell-Config-Scanner implementieren
-- [ ] TOML-Manifest Serialisierung
-- [ ] Einfaches Shell-Script generieren (noch kein DMG)
+- [ ] TOML-Manifest Serialisierung (BurntSushi/toml)
+- [ ] Einfaches Shell-Script generieren via `text/template` (noch kein DMG)
 - [ ] Erster End-to-End Test: Scan → Manifest → Script
 
 ### Phase 2 — Core Scanners
@@ -1010,17 +1179,30 @@ tracing-subscriber = "0.3"
 - [ ] Folder Structure Scanner
 
 ### Phase 4 — Security & Bundling
-- [ ] age-Encryption für SSH Keys + .env Files
+- [ ] age-Encryption für SSH Keys + .env Files (filippo.io/age)
 - [ ] DMG-Erstellung via hdiutil
-- [ ] Interactive Mode (--interactive)
+- [ ] Interactive Mode mit bubbletea (--interactive)
 - [ ] Dry-Run Mode (--dry-run)
 
-### Phase 5 — Polish
+### Phase 5 — MCP Server & Profiles
+- [ ] MCP Server Grundgerüst (stdio transport via mcp-go)
+- [ ] MCP Tools: `list_scanners`, `scan`, `scan_all`
+- [ ] MCP Tools: `list_profiles`, `get_profile`
+- [ ] Profile-System: Laden, Vererben, Mergen von Preset-Manifesten
+- [ ] Mitgelieferte Profiles: minimal, fullstack-js, flutter-ios, python-data, devops
+- [ ] MCP Tools: `compose_manifest`, `validate_manifest`
+- [ ] MCP Tools: `build_dmg`, `diff_manifests`
+- [ ] MCP Resources: `machinist://system/snapshot`, `machinist://profiles/{name}`
+- [ ] SSE transport für Claude Desktop / Web-Clients
+- [ ] `machinist compose` CLI-Command (Profile + Overrides → DMG)
+
+### Phase 6 — Polish
 - [ ] Restore-Script mit Progress-Ausgabe
 - [ ] Idempotenz in allen Restore-Stages
 - [ ] Error Recovery (einzelne Stage fails → weiter)
-- [ ] README im DMG generieren
+- [ ] README + Post-Restore Checkliste im DMG generieren
 - [ ] Architecture-Check (Intel vs ARM Warnings)
+- [ ] `go:embed` für Templates + Profiles ins Binary
 
 ---
 
@@ -1086,3 +1268,12 @@ Include these? They will be encrypted with a passphrase. [y/N]
 
 13. **Cloud-Upload des Snapshots**: DMG nur lokal oder auch Upload zu S3/iCloud/NAS?
     → Vorschlag: v1 nur lokal, v2 optional `machinist snapshot --upload s3://bucket/`
+
+14. **Community Profiles**: Sollen User eigene Profiles teilen können (z.B. via GitHub)?
+    → Vorschlag: `machinist compose --from github:user/repo/profile.toml`
+
+15. **Profile-Validierung**: Wie tief sollen Profiles validiert werden? (z.B. "Flutter braucht Xcode CLT")
+    → Vorschlag: `validate_manifest` prüft bekannte Dependency-Chains
+
+16. **MCP Auth**: Braucht der MCP Server Auth für `build_dmg` (erzeugt Dateien auf Disk)?
+    → Vorschlag: Nein — MCP-Clients haben eigene Permission-Systeme (Claude Code fragt User)
