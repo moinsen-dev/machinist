@@ -63,9 +63,9 @@ func TestShellConfigScanner_Scan_ZshFiles(t *testing.T) {
 	for _, cf := range result.Shell.ConfigFiles {
 		sources[cf.Source] = true
 	}
-	assert.True(t, sources["~/.zshrc"])
-	assert.True(t, sources["~/.zshenv"])
-	assert.True(t, sources["~/.zprofile"])
+	assert.True(t, sources[".zshrc"])
+	assert.True(t, sources[".zshenv"])
+	assert.True(t, sources[".zprofile"])
 }
 
 func TestShellConfigScanner_Scan_BashFiles(t *testing.T) {
@@ -97,8 +97,8 @@ func TestShellConfigScanner_Scan_BashFiles(t *testing.T) {
 	for _, cf := range result.Shell.ConfigFiles {
 		sources[cf.Source] = true
 	}
-	assert.True(t, sources["~/.bashrc"])
-	assert.True(t, sources["~/.bash_profile"])
+	assert.True(t, sources[".bashrc"])
+	assert.True(t, sources[".bash_profile"])
 }
 
 func TestShellConfigScanner_Scan_DefaultShell(t *testing.T) {
@@ -162,7 +162,7 @@ func TestShellConfigScanner_Scan_Starship(t *testing.T) {
 	// Verify starship.toml is in ConfigFiles.
 	found := false
 	for _, cf := range result.Shell.ConfigFiles {
-		if cf.Source == "~/.config/starship.toml" {
+		if cf.Source == ".config/starship.toml" {
 			found = true
 			assert.NotEmpty(t, cf.ContentHash)
 			break
@@ -193,7 +193,7 @@ func TestShellConfigScanner_Scan_P10k(t *testing.T) {
 	// Verify .p10k.zsh is in ConfigFiles.
 	found := false
 	for _, cf := range result.Shell.ConfigFiles {
-		if cf.Source == "~/.p10k.zsh" {
+		if cf.Source == ".p10k.zsh" {
 			found = true
 			assert.NotEmpty(t, cf.ContentHash)
 			break
@@ -263,8 +263,8 @@ func TestShellConfigScanner_Scan_Combined(t *testing.T) {
 	for _, cf := range result.Shell.ConfigFiles {
 		sources[cf.Source] = true
 	}
-	assert.True(t, sources["~/.zshrc"])
-	assert.True(t, sources["~/.config/starship.toml"])
+	assert.True(t, sources[".zshrc"])
+	assert.True(t, sources[".config/starship.toml"])
 }
 
 func TestShellConfigScanner_Scan_Prezto(t *testing.T) {
@@ -340,7 +340,7 @@ func TestShellConfigScanner_Scan_AllDotfiles(t *testing.T) {
 		assert.NotEmpty(t, cf.ContentHash, "ContentHash should not be empty for %s", cf.Source)
 	}
 	for _, name := range allFiles {
-		assert.True(t, sources["~/"+name], "expected %s to be in ConfigFiles", name)
+		assert.True(t, sources[name], "expected %s to be in ConfigFiles", name)
 	}
 }
 

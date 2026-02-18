@@ -58,7 +58,8 @@ func (s *VSCodeScanner) Scan(ctx context.Context) (*scanner.ScanResult, error) {
 			continue
 		}
 		section.ConfigFiles = append(section.ConfigFiles, domain.ConfigFile{
-			Source:      "~/Library/Application Support/Code/User/" + name,
+			Source:      "Library/Application Support/Code/User/" + name,
+			BundlePath:  filepath.Join("configs", "vscode", name),
 			ContentHash: hash,
 		})
 	}
@@ -67,7 +68,7 @@ func (s *VSCodeScanner) Scan(ctx context.Context) (*scanner.ScanResult, error) {
 	snippetsPath := filepath.Join(configDir, "snippets")
 	if util.DirExists(snippetsPath) {
 		found = true
-		section.SnippetsDir = "~/Library/Application Support/Code/User/snippets"
+		section.SnippetsDir = "Library/Application Support/Code/User/snippets"
 	}
 
 	if !found {
@@ -122,7 +123,8 @@ func (s *CursorScanner) Scan(ctx context.Context) (*scanner.ScanResult, error) {
 		hash, hashErr := util.ContentHash(settingsPath)
 		if hashErr == nil {
 			section.ConfigFiles = append(section.ConfigFiles, domain.ConfigFile{
-				Source:      "~/Library/Application Support/Cursor/User/settings.json",
+				Source:      "Library/Application Support/Cursor/User/settings.json",
+				BundlePath:  "configs/cursor/settings.json",
 				ContentHash: hash,
 			})
 		}

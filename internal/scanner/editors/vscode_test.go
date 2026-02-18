@@ -81,8 +81,8 @@ func TestVSCodeScanner_Scan_ConfigFiles(t *testing.T) {
 	for _, cf := range result.VSCode.ConfigFiles {
 		sources[cf.Source] = cf.ContentHash
 	}
-	assert.Contains(t, sources, "~/Library/Application Support/Code/User/settings.json")
-	assert.Contains(t, sources, "~/Library/Application Support/Code/User/keybindings.json")
+	assert.Contains(t, sources, "Library/Application Support/Code/User/settings.json")
+	assert.Contains(t, sources, "Library/Application Support/Code/User/keybindings.json")
 
 	for _, cf := range result.VSCode.ConfigFiles {
 		assert.NotEmpty(t, cf.ContentHash, "ContentHash should not be empty for %s", cf.Source)
@@ -108,7 +108,7 @@ func TestVSCodeScanner_Scan_SnippetsDir(t *testing.T) {
 	require.NotNil(t, result)
 	require.NotNil(t, result.VSCode)
 	assert.NotEmpty(t, result.VSCode.SnippetsDir)
-	assert.Equal(t, "~/Library/Application Support/Code/User/snippets", result.VSCode.SnippetsDir)
+	assert.Equal(t, "Library/Application Support/Code/User/snippets", result.VSCode.SnippetsDir)
 }
 
 func TestVSCodeScanner_Scan_Combined(t *testing.T) {
@@ -244,7 +244,7 @@ func TestCursorScanner_Scan_ConfigFiles(t *testing.T) {
 	require.NotNil(t, result)
 	require.NotNil(t, result.Cursor)
 	assert.Len(t, result.Cursor.ConfigFiles, 1)
-	assert.Equal(t, "~/Library/Application Support/Cursor/User/settings.json", result.Cursor.ConfigFiles[0].Source)
+	assert.Equal(t, "Library/Application Support/Cursor/User/settings.json", result.Cursor.ConfigFiles[0].Source)
 	assert.NotEmpty(t, result.Cursor.ConfigFiles[0].ContentHash)
 }
 

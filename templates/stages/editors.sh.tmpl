@@ -5,10 +5,10 @@ code --install-extension "{{.}}" || true
 {{end}}
 
 {{range .ConfigFiles}}
-if [ -f "configs/{{.Source}}" ]; then
+if [ -f "{{.BundlePath}}" ]; then
     log "Restoring VSCode config {{.Source}}"
     mkdir -p "$(dirname "$HOME/{{.Source}}")"
-    cp "configs/{{.Source}}" "$HOME/{{.Source}}"
+    cp "{{.BundlePath}}" "$HOME/{{.Source}}"
 fi
 {{end}}
 {{end}}
@@ -20,10 +20,10 @@ cursor --install-extension "{{.}}" || true
 {{end}}
 
 {{range .ConfigFiles}}
-if [ -f "configs/{{.Source}}" ]; then
+if [ -f "{{.BundlePath}}" ]; then
     log "Restoring Cursor config {{.Source}}"
     mkdir -p "$(dirname "$HOME/{{.Source}}")"
-    cp "configs/{{.Source}}" "$HOME/{{.Source}}"
+    cp "{{.BundlePath}}" "$HOME/{{.Source}}"
 fi
 {{end}}
 {{end}}

@@ -1,9 +1,9 @@
 {{define "git-repos"}}
 {{range .Repositories}}
 if [ ! -d "{{.Path}}" ]; then
-    log "Cloning {{.RemoteURL}} → {{.Path}}"
+    log "Cloning {{.Remote}} → {{.Path}}"
     mkdir -p "$(dirname "{{.Path}}")"
-    git clone{{if .Shallow}} --depth 1{{end}} "{{.RemoteURL}}" "{{.Path}}" || log "Warning: Failed to clone {{.RemoteURL}}"
+    git clone{{if .Shallow}} --depth 1{{end}} "{{.Remote}}" "{{.Path}}" || log "Warning: Failed to clone {{.Remote}}"
 {{if .Branch}}    cd "{{.Path}}" && git checkout "{{.Branch}}" 2>/dev/null; cd - >/dev/null
 {{end}}else
     log "Skipping {{.Path}} (already exists)"

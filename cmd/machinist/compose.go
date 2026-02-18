@@ -10,32 +10,24 @@ import (
 )
 
 var (
-	composeFrom   string
 	composeOutput string
 	composeAdd    string
 )
 
 var composeCmd = &cobra.Command{
-	Use:   "compose",
-	Short: "Compose a manifest from a profile",
-	Long:  "Build a setup manifest starting from a built-in profile, optionally adding extra packages.",
+	Use:   "compose <profile>",
+	Short: "Compose a manifest from a built-in profile",
+	Long:  "Build a setup manifest starting from a built-in profile, optionally adding extra packages.\nUse 'machinist list' to see available profiles.",
+	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if composeFrom == "" {
-			available, _ := profiles.List()
-			fmt.Fprintln(cmd.ErrOrStderr(), "Error: --from is required")
-			fmt.Fprintln(cmd.ErrOrStderr(), "Available profiles:", strings.Join(available, ", "))
-			return fmt.Errorf("--from flag is required")
-		}
-
-		// Strip profile:// prefix if present
-		name := strings.TrimPrefix(composeFrom, "profile://")
+		name := strings.TrimPrefix(args[0], "profile://")
 
 		snap, err := profiles.Get(name)
 		if err != nil {
-			return fmt.Errorf("load profile %q: %w", name, err)
+			available, _ := profiles.List()
+			return fmt.Errorf("unknown profile %q (available: %s)", name, strings.Join(available, ", "))
 		}
 
-		// Add extra packages
 		if composeAdd != "" {
 			extras := strings.Split(composeAdd, ",")
 			if snap.Homebrew == nil {
@@ -59,7 +51,6 @@ var composeCmd = &cobra.Command{
 }
 
 func init() {
-	composeCmd.Flags().StringVar(&composeFrom, "from", "", "Profile name (e.g. minimal, fullstack-js) or profile://name")
 	composeCmd.Flags().StringVarP(&composeOutput, "output", "o", "composed-manifest.toml", "Output file path")
 	composeCmd.Flags().StringVar(&composeAdd, "add", "", "Comma-separated packages to add (e.g. docker,postgres)")
 	rootCmd.AddCommand(composeCmd)

@@ -1,6 +1,9 @@
 #!/bin/bash
 set -uo pipefail  # Note: removed -e so individual stage failures don't abort
 
+# Change to the directory where this script lives (the bundle root)
+cd "$(dirname "$0")"
+
 # machinist restore script
 # Generated: {{.Meta.CreatedAt}}
 # Source: {{.Meta.SourceHostname}} ({{.Meta.SourceOSVersion}}, {{.Meta.SourceArch}})

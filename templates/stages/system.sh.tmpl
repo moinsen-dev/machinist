@@ -4,7 +4,7 @@ if ! command -v mas &>/dev/null; then
     brew install mas || log "Warning: Could not install mas"
 fi
 
-{{range .InstalledApps}}
+{{range .AppStore}}
 log "Installing {{.Name}} ({{.ID}})"
 mas install {{.ID}} 2>/dev/null || log "Warning: Could not install {{.Name}}"
 {{end}}
@@ -49,9 +49,9 @@ CRONTAB
 log "Restoring LaunchAgents"
 mkdir -p "$HOME/Library/LaunchAgents"
 {{range .LaunchAgents.Plists}}
-if [ -f "configs/{{.Source}}" ]; then
-    cp "configs/{{.Source}}" "$HOME/Library/LaunchAgents/"
-    launchctl load "$HOME/Library/LaunchAgents/$(basename "{{.Source}}")" 2>/dev/null || true
+if [ -f "{{.BundlePath}}" ]; then
+    cp "{{.BundlePath}}" "$HOME/Library/LaunchAgents/"
+    launchctl load "$HOME/Library/LaunchAgents/$(basename "{{.BundlePath}}")" 2>/dev/null || true
 fi
 {{end}}
 {{end}}

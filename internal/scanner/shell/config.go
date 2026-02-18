@@ -50,7 +50,8 @@ func (s *ShellConfigScanner) Scan(ctx context.Context) (*scanner.ScanResult, err
 			continue
 		}
 		section.ConfigFiles = append(section.ConfigFiles, domain.ConfigFile{
-			Source:      "~/" + name,
+			Source:      name,
+			BundlePath:  filepath.Join("configs", "shell", name),
 			ContentHash: hash,
 		})
 	}
@@ -79,7 +80,8 @@ func (s *ShellConfigScanner) Scan(ctx context.Context) (*scanner.ScanResult, err
 		hash, err := util.ContentHash(starshipPath)
 		if err == nil {
 			section.ConfigFiles = append(section.ConfigFiles, domain.ConfigFile{
-				Source:      "~/.config/starship.toml",
+				Source:      ".config/starship.toml",
+				BundlePath:  "configs/shell/starship.toml",
 				ContentHash: hash,
 			})
 		}
@@ -88,7 +90,8 @@ func (s *ShellConfigScanner) Scan(ctx context.Context) (*scanner.ScanResult, err
 		hash, err := util.ContentHash(p10kPath)
 		if err == nil {
 			section.ConfigFiles = append(section.ConfigFiles, domain.ConfigFile{
-				Source:      "~/.p10k.zsh",
+				Source:      ".p10k.zsh",
+				BundlePath:  "configs/shell/.p10k.zsh",
 				ContentHash: hash,
 			})
 		}

@@ -82,8 +82,8 @@ func TestPrepareBundleDir_WithConfigFiles(t *testing.T) {
 		Shell: &domain.ShellSection{
 			DefaultShell: "/bin/zsh",
 			ConfigFiles: []domain.ConfigFile{
-				{Source: filepath.Join(configSourceDir, ".zshrc"), BundlePath: "configs/.zshrc"},
-				{Source: filepath.Join(configSourceDir, ".zprofile"), BundlePath: "configs/.zprofile"},
+				{Source: ".zshrc", BundlePath: "configs/.zshrc"},
+				{Source: ".zprofile", BundlePath: "configs/.zprofile"},
 			},
 		},
 	}

@@ -94,9 +94,9 @@ func TestFullPipeline(t *testing.T) {
 	for i, cf := range snap.Shell.ConfigFiles {
 		sources[i] = cf.Source
 	}
-	assert.Contains(t, sources, "~/.zshrc")
-	assert.Contains(t, sources, "~/.zshenv")
-	assert.Contains(t, sources, "~/.config/starship.toml")
+	assert.Contains(t, sources, ".zshrc")
+	assert.Contains(t, sources, ".zshenv")
+	assert.Contains(t, sources, ".config/starship.toml")
 
 	// All config files should have a content hash.
 	for _, cf := range snap.Shell.ConfigFiles {

@@ -86,11 +86,12 @@ func (s *ScheduledScanner) scanLaunchAgents() *domain.LaunchAgentsSection {
 			continue
 		}
 		absPath := filepath.Join(launchAgentsDir, entry.Name())
-		source := filepath.Join("~/Library/LaunchAgents", entry.Name())
+		source := filepath.Join("Library", "LaunchAgents", entry.Name())
 
 		hash, _ := util.ContentHash(absPath)
 		section.Plists = append(section.Plists, domain.ConfigFile{
 			Source:      source,
+			BundlePath:  filepath.Join("configs", "launchagents", entry.Name()),
 			ContentHash: hash,
 		})
 	}

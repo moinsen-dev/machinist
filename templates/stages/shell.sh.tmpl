@@ -1,9 +1,9 @@
 {{define "shell"}}
 {{range .ConfigFiles}}
-if [ -f "configs/{{.Source}}" ]; then
+if [ -f "{{.BundlePath}}" ]; then
     log "Restoring {{.Source}}"
     mkdir -p "$(dirname "$HOME/{{.Source}}")"
-    cp "configs/{{.Source}}" "$HOME/{{.Source}}"
+    cp "{{.BundlePath}}" "$HOME/{{.Source}}"
 fi
 {{end}}
 

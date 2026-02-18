@@ -64,9 +64,13 @@ func PrepareBundleDir(snapshot *domain.Snapshot, outputDir string, configSourceD
 	}
 
 	// Copy config files referenced in snapshot sections to configs/
+	if configSourceDir == "" {
+		homeDir, _ := os.UserHomeDir()
+		configSourceDir = homeDir
+	}
 	configFiles := collectConfigFiles(snapshot)
 	for _, cf := range configFiles {
-		if err := copyConfigFile(cf, outputDir); err != nil {
+		if err := copyConfigFile(cf, outputDir, configSourceDir); err != nil {
 			return fmt.Errorf("copy config file %s: %w", cf.Source, err)
 		}
 	}
@@ -173,19 +177,32 @@ func collectConfigFiles(snapshot *domain.Snapshot) []domain.ConfigFile {
 }
 
 // copyConfigFile copies a single config file into the bundle directory,
-// preserving the BundlePath relative structure.
-func copyConfigFile(cf domain.ConfigFile, bundleDir string) error {
-	if cf.Source == "" || cf.BundlePath == "" {
+// preserving the BundlePath relative structure. Source is resolved relative
+// to homeDir. Missing files are silently skipped.
+func copyConfigFile(cf domain.ConfigFile, bundleDir string, homeDir string) error {
+	if cf.Source == "" {
 		return nil
 	}
 
-	srcFile, err := os.Open(cf.Source)
+	srcPath := filepath.Join(homeDir, cf.Source)
+	if _, err := os.Stat(srcPath); os.IsNotExist(err) {
+		// Gracefully skip missing config files
+		return nil
+	}
+
+	srcFile, err := os.Open(srcPath)
 	if err != nil {
 		return err
 	}
 	defer srcFile.Close()
 
-	destPath := filepath.Join(bundleDir, cf.BundlePath)
+	// Use BundlePath if set, otherwise derive from Source
+	bundlePath := cf.BundlePath
+	if bundlePath == "" {
+		bundlePath = filepath.Join("configs", cf.Source)
+	}
+
+	destPath := filepath.Join(bundleDir, bundlePath)
 	if err := os.MkdirAll(filepath.Dir(destPath), 0755); err != nil {
 		return err
 	}
@@ -196,9 +213,6 @@ func copyConfigFile(cf domain.ConfigFile, bundleDir string) error {
 	}
 	defer destFile.Close()
 
-	if _, err := io.Copy(destFile, srcFile); err != nil {
-		return err
-	}
-
-	return nil
+	_, err = io.Copy(destFile, srcFile)
+	return err
 }

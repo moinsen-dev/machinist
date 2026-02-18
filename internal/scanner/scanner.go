@@ -88,26 +88,59 @@ func (r *Registry) List() []Scanner {
 	return scanners
 }
 
+// ProgressEvent describes what happened during a scan step.
+type ProgressEvent struct {
+	Name     string
+	Index    int
+	Total    int
+	Done     bool
+	Duration time.Duration
+	Err      error
+}
+
+// ProgressFunc is called before (Done=false) and after (Done=true) each scanner.
+type ProgressFunc func(event ProgressEvent)
+
 // ScanAll runs all registered scanners sequentially and merges results into a Snapshot.
 func (r *Registry) ScanAll(ctx context.Context) (*domain.Snapshot, []error) {
+	return r.ScanAllWithProgress(ctx, nil)
+}
+
+// ScanAllWithProgress runs all scanners with an optional progress callback.
+func (r *Registry) ScanAllWithProgress(ctx context.Context, onProgress ProgressFunc) (*domain.Snapshot, []error) {
 	start := time.Now()
 
 	hostname, _ := os.Hostname()
 	arch := runtime.GOARCH
-
-	// Use a simple OS version string; full version detection can be added later.
 	osVersion := runtime.GOOS
 
 	snap := domain.NewSnapshot(hostname, osVersion, arch, "")
 
+	scanners := r.List()
+	total := len(scanners)
 	var errs []error
-	for _, s := range r.List() {
+
+	for i, s := range scanners {
+		if onProgress != nil {
+			onProgress(ProgressEvent{Name: s.Name(), Index: i, Total: total})
+		}
+
+		scanStart := time.Now()
 		result, err := s.Scan(ctx)
+		elapsed := time.Since(scanStart)
+
 		if err != nil {
 			errs = append(errs, fmt.Errorf("scanner %s: %w", s.Name(), err))
+			if onProgress != nil {
+				onProgress(ProgressEvent{Name: s.Name(), Index: i, Total: total, Done: true, Duration: elapsed, Err: err})
+			}
 			continue
 		}
 		applyResult(snap, result)
+
+		if onProgress != nil {
+			onProgress(ProgressEvent{Name: s.Name(), Index: i, Total: total, Done: true, Duration: elapsed})
+		}
 	}
 
 	snap.Meta.ScanDurationSecs = time.Since(start).Seconds()

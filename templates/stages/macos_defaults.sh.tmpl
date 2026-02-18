@@ -1,7 +1,7 @@
 {{define "macos-defaults"}}
 {{if .Dock}}
 log "Configuring Dock"
-{{if .Dock.Autohide}}defaults write com.apple.dock autohide -bool true{{end}}
+{{if .Dock.AutoHide}}defaults write com.apple.dock autohide -bool true{{end}}
 defaults write com.apple.dock tilesize -int {{.Dock.TileSize}}
 defaults write com.apple.dock orientation -string "{{.Dock.Orientation}}"
 {{if .Dock.Magnification}}defaults write com.apple.dock magnification -bool true{{end}}
@@ -12,20 +12,20 @@ defaults write com.apple.dock orientation -string "{{.Dock.Orientation}}"
 log "Configuring Finder"
 {{if .Finder.ShowPathBar}}defaults write com.apple.finder ShowPathbar -bool true{{end}}
 {{if .Finder.ShowStatusBar}}defaults write com.apple.finder ShowStatusBar -bool true{{end}}
-{{if .Finder.ShowAllFiles}}defaults write com.apple.finder AppleShowAllFiles -bool true{{end}}
-{{if .Finder.DefaultViewStyle}}defaults write com.apple.finder FXPreferredViewStyle -string "{{.Finder.DefaultViewStyle}}"{{end}}
+{{if .Finder.ShowHidden}}defaults write com.apple.finder AppleShowAllFiles -bool true{{end}}
+{{if .Finder.DefaultView}}defaults write com.apple.finder FXPreferredViewStyle -string "{{.Finder.DefaultView}}"{{end}}
 {{end}}
 
 {{if .Keyboard}}
 log "Configuring Keyboard"
 defaults write NSGlobalDomain KeyRepeat -int {{.Keyboard.KeyRepeat}}
 defaults write NSGlobalDomain InitialKeyRepeat -int {{.Keyboard.InitialKeyRepeat}}
-{{if not .Keyboard.PressAndHold}}defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false{{end}}
+{{if not .Keyboard.ApplePressAndHoldEnabled}}defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false{{end}}
 {{end}}
 
 {{if .Screenshots}}
 log "Configuring Screenshots"
-{{if .Screenshots.Location}}defaults write com.apple.screencapture location -string "{{.Screenshots.Location}}"{{end}}
+{{if .Screenshots.Path}}defaults write com.apple.screencapture location -string "{{.Screenshots.Path}}"{{end}}
 {{if .Screenshots.Format}}defaults write com.apple.screencapture type -string "{{.Screenshots.Format}}"{{end}}
 {{if .Screenshots.DisableShadow}}defaults write com.apple.screencapture disable-shadow -bool true{{end}}
 {{end}}

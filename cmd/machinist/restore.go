@@ -2,32 +2,35 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 
+	"github.com/moinsen-dev/machinist/internal/bundler"
 	"github.com/moinsen-dev/machinist/internal/domain"
 	"github.com/spf13/cobra"
 )
 
 var (
-	restoreFrom   string
 	restoreSkip   string
 	restoreOnly   string
 	restoreDryRun bool
+	restoreYes    bool
 )
 
 var restoreCmd = &cobra.Command{
-	Use:   "restore",
+	Use:   "restore <manifest.toml>",
 	Short: "Restore environment from manifest",
+	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if restoreFrom == "" {
-			return fmt.Errorf("--from flag is required: provide a path to manifest.toml or mounted DMG")
-		}
+		manifestPath := args[0]
 
 		if restoreSkip != "" && restoreOnly != "" {
 			return fmt.Errorf("--skip and --only are mutually exclusive; use one or the other")
 		}
 
-		snap, err := domain.ReadManifest(restoreFrom)
+		snap, err := domain.ReadManifest(manifestPath)
 		if err != nil {
 			return fmt.Errorf("read manifest: %w", err)
 		}
@@ -48,7 +51,7 @@ var restoreCmd = &cobra.Command{
 
 		if restoreDryRun {
 			fmt.Fprintf(cmd.OutOrStdout(), "Dry-run mode: restore plan\n")
-			fmt.Fprintf(cmd.OutOrStdout(), "Manifest: %s\n", restoreFrom)
+			fmt.Fprintf(cmd.OutOrStdout(), "Manifest: %s\n", manifestPath)
 			fmt.Fprintf(cmd.OutOrStdout(), "Host: %s (%s)\n", snap.Meta.SourceHostname, snap.Meta.SourceArch)
 			fmt.Fprintf(cmd.OutOrStdout(), "Stages to execute: %d\n", len(sections))
 			for i, s := range sections {
@@ -58,12 +61,39 @@ var restoreCmd = &cobra.Command{
 			return nil
 		}
 
-		fmt.Fprintf(cmd.OutOrStdout(), "Restoring %d stages from %s\n", len(sections), restoreFrom)
+		fmt.Fprintf(cmd.OutOrStdout(), "Restoring %d stages from %s\n", len(sections), manifestPath)
 		for _, s := range sections {
 			fmt.Fprintf(cmd.OutOrStdout(), "  - %s\n", s)
 		}
-		// TODO: execute the generated install.command / restore script for each stage
-		fmt.Fprintln(cmd.OutOrStdout(), "\nRestore execution is not yet implemented.")
+
+		if !restoreYes {
+			fmt.Fprintln(cmd.OutOrStdout(), "\nUse --yes to confirm execution.")
+			return nil
+		}
+
+		// Find or generate the install script
+		scriptPath := filepath.Join(filepath.Dir(manifestPath), "install.command")
+		if _, err := os.Stat(scriptPath); os.IsNotExist(err) {
+			script, genErr := bundler.GenerateRestoreScript(snap)
+			if genErr != nil {
+				return fmt.Errorf("generate restore script: %w", genErr)
+			}
+			scriptPath = filepath.Join(os.TempDir(), "machinist-restore.sh")
+			if writeErr := os.WriteFile(scriptPath, []byte(script), 0755); writeErr != nil {
+				return fmt.Errorf("write temp script: %w", writeErr)
+			}
+			defer os.Remove(scriptPath)
+		}
+
+		execCmd := exec.CommandContext(cmd.Context(), "bash", scriptPath)
+		execCmd.Dir = filepath.Dir(manifestPath)
+		execCmd.Stdout = cmd.OutOrStdout()
+		execCmd.Stderr = cmd.ErrOrStderr()
+		if err := execCmd.Run(); err != nil {
+			return fmt.Errorf("restore script failed: %w", err)
+		}
+
+		fmt.Fprintln(cmd.OutOrStdout(), "\nRestore complete.")
 		return nil
 	},
 }
@@ -112,9 +142,9 @@ func filterExclude(items, exclude []string) []string {
 }
 
 func init() {
-	restoreCmd.Flags().StringVar(&restoreFrom, "from", "", "Path to manifest.toml or mounted DMG directory")
 	restoreCmd.Flags().StringVar(&restoreSkip, "skip", "", "Comma-separated list of stages to skip")
 	restoreCmd.Flags().StringVar(&restoreOnly, "only", "", "Comma-separated list of stages to run (exclusive with --skip)")
 	restoreCmd.Flags().BoolVar(&restoreDryRun, "dry-run", false, "Show what would be executed without doing it")
+	restoreCmd.Flags().BoolVarP(&restoreYes, "yes", "y", false, "Skip confirmation prompt")
 	rootCmd.AddCommand(restoreCmd)
 }
