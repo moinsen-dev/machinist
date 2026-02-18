@@ -26,6 +26,30 @@ log "machinist restore started"
 {{template "shell" .Shell}}
 {{end}}
 
+{{if .GitRepos}}
+{{template "git-repos" .GitRepos}}
+{{end}}
+
+{{if .Node}}
+{{template "node" .Node}}
+{{end}}
+
+{{if .Python}}
+{{template "python" .Python}}
+{{end}}
+
+{{if .Rust}}
+{{template "rust" .Rust}}
+{{end}}
+
+{{if .VSCode}}
+{{template "vscode" .VSCode}}
+{{end}}
+
+{{if .Cursor}}
+{{template "cursor" .Cursor}}
+{{end}}
+
 log "machinist restore completed"
 echo ""
 echo "✓ Restore complete. Check $LOGFILE for details."

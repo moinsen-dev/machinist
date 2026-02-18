@@ -1,0 +1,38 @@
+{{define "node"}}
+stage "Node.js"
+
+{{if eq .Manager "nvm"}}
+# Install nvm if not present
+if [ ! -d "$HOME/.nvm" ]; then
+    log "Installing nvm..."
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/HEAD/install.sh | bash
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+fi
+{{range .Versions}}
+log "Installing Node {{.}}"
+nvm install "{{.}}" || true
+{{end}}
+{{if .DefaultVersion}}
+log "Setting default Node to {{.DefaultVersion}}"
+nvm alias default "{{.DefaultVersion}}"
+{{end}}
+{{else if eq .Manager "fnm"}}
+if ! command -v fnm &>/dev/null; then
+    log "Installing fnm..."
+    brew install fnm || curl -fsSL https://fnm.vercel.app/install | bash
+fi
+{{range .Versions}}
+log "Installing Node {{.}}"
+fnm install "{{.}}" || true
+{{end}}
+{{if .DefaultVersion}}
+fnm default "{{.DefaultVersion}}"
+{{end}}
+{{end}}
+
+{{range .GlobalPackages}}
+log "Installing global npm package {{.Name}}"
+npm list -g "{{.Name}}" &>/dev/null || npm install -g "{{.Name}}"
+{{end}}
+{{end}}

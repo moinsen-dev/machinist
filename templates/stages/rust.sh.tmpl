@@ -1,0 +1,30 @@
+{{define "rust"}}
+stage "Rust"
+
+# Install rustup if not present
+if ! command -v rustup &>/dev/null; then
+    log "Installing rustup..."
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+    source "$HOME/.cargo/env"
+fi
+
+{{range .Toolchains}}
+log "Installing toolchain {{.}}"
+rustup toolchain install "{{.}}" || true
+{{end}}
+
+{{if .DefaultToolchain}}
+log "Setting default toolchain to {{.DefaultToolchain}}"
+rustup default "{{.DefaultToolchain}}"
+{{end}}
+
+{{range .Components}}
+log "Adding component {{.}}"
+rustup component add "{{.}}" || true
+{{end}}
+
+{{range .CargoPackages}}
+log "Installing cargo package {{.Name}}"
+cargo install "{{.Name}}" || true
+{{end}}
+{{end}}

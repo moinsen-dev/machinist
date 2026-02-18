@@ -1,0 +1,14 @@
+{{define "git-repos"}}
+stage "Git Repositories"
+
+{{range .Repositories}}
+if [ ! -d "{{.Path}}" ]; then
+    log "Cloning {{.RemoteURL}} → {{.Path}}"
+    mkdir -p "$(dirname "{{.Path}}")"
+    git clone{{if .Shallow}} --depth 1{{end}} "{{.RemoteURL}}" "{{.Path}}" || log "Warning: Failed to clone {{.RemoteURL}}"
+{{if .Branch}}    cd "{{.Path}}" && git checkout "{{.Branch}}" 2>/dev/null; cd - >/dev/null
+{{end}}else
+    log "Skipping {{.Path}} (already exists)"
+fi
+{{end}}
+{{end}}

@@ -27,6 +27,7 @@ type ScanResult struct {
 	Git           *domain.GitSection
 	GitRepos      *domain.GitReposSection
 	VSCode        *domain.VSCodeSection
+	Cursor        *domain.CursorSection
 	Docker        *domain.DockerSection
 	MacOSDefaults *domain.MacOSDefaultsSection
 }
@@ -146,6 +147,9 @@ func applyResult(snap *domain.Snapshot, result *ScanResult) {
 	}
 	if result.VSCode != nil {
 		snap.VSCode = result.VSCode
+	}
+	if result.Cursor != nil {
+		snap.Cursor = result.Cursor
 	}
 	if result.Docker != nil {
 		snap.Docker = result.Docker

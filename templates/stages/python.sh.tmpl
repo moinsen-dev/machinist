@@ -1,0 +1,32 @@
+{{define "python"}}
+stage "Python"
+
+{{if eq .Manager "pyenv"}}
+if ! command -v pyenv &>/dev/null; then
+    log "Installing pyenv..."
+    brew install pyenv || curl https://pyenv.run | bash
+fi
+{{range .Versions}}
+log "Installing Python {{.}}"
+pyenv install -s "{{.}}"
+{{end}}
+{{if .DefaultVersion}}
+log "Setting global Python to {{.DefaultVersion}}"
+pyenv global "{{.DefaultVersion}}"
+{{end}}
+{{else if eq .Manager "uv"}}
+if ! command -v uv &>/dev/null; then
+    log "Installing uv..."
+    brew install uv || curl -LsSf https://astral.sh/uv/install.sh | sh
+fi
+{{range .Versions}}
+log "Installing Python {{.}}"
+uv python install "{{.}}" || true
+{{end}}
+{{end}}
+
+{{range .GlobalPackages}}
+log "Installing pip package {{.Name}}"
+pip install "{{.Name}}" 2>/dev/null || true
+{{end}}
+{{end}}
