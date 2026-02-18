@@ -1,0 +1,24 @@
+# Machinist Restore Bundle
+
+This bundle was created by **machinist** to restore a developer environment.
+
+- **Source machine**: {{.Meta.SourceHostname}}
+- **OS version**: {{.Meta.SourceOSVersion}}
+- **Architecture**: {{.Meta.SourceArch}}
+- **Created**: {{.Meta.CreatedAt}}
+- **Machinist version**: {{.Meta.MachinistVersion}}
+
+## How to Restore
+
+1. Double-click **install.command** to start the restore process.
+2. The script will install packages, restore configurations, and set up your environment.
+3. Review the log at `~/.machinist/restore.log` for details.
+4. Check **POST_RESTORE_CHECKLIST.md** for manual steps after restore.
+
+## Bundle Contents
+
+- `install.command` — The restore script (double-click to run)
+- `manifest.toml` — Machine snapshot in TOML format
+- `configs/` — Configuration files referenced by the manifest
+- `POST_RESTORE_CHECKLIST.md` — Manual steps after restore
+- `README.md` — This file

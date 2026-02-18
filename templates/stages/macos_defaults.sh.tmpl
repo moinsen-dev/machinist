@@ -1,6 +1,4 @@
 {{define "macos-defaults"}}
-stage "macOS Defaults"
-
 {{if .Dock}}
 log "Configuring Dock"
 {{if .Dock.Autohide}}defaults write com.apple.dock autohide -bool true{{end}}

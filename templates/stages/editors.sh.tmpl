@@ -1,6 +1,4 @@
 {{define "vscode"}}
-stage "Visual Studio Code"
-
 {{range .Extensions}}
 log "Installing VSCode extension {{.}}"
 code --install-extension "{{.}}" || true
@@ -16,8 +14,6 @@ fi
 {{end}}
 
 {{define "cursor"}}
-stage "Cursor"
-
 {{range .Extensions}}
 log "Installing Cursor extension {{.}}"
 cursor --install-extension "{{.}}" || true

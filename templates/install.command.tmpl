@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -uo pipefail  # Note: removed -e so individual stage failures don't abort
 
 # machinist restore script
 # Generated: {{.Meta.CreatedAt}}
@@ -7,69 +7,141 @@ set -euo pipefail
 
 LOGFILE="$HOME/.machinist/restore.log"
 mkdir -p "$(dirname "$LOGFILE")"
+STAGE_NUM=0
+STAGE_TOTAL={{.StageCount}}
+STAGE_PASS=0
+STAGE_FAIL=0
+STAGE_SKIP=0
 
-log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOGFILE"
-}
+log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOGFILE"; }
 
 stage() {
-    log "=== Stage: $1 ==="
+    STAGE_NUM=$((STAGE_NUM + 1))
+    log "[$STAGE_NUM/$STAGE_TOTAL] === $1 ==="
 }
 
+run_stage() {
+    local name="$1"
+    shift
+    stage "$name"
+    if "$@"; then
+        STAGE_PASS=$((STAGE_PASS + 1))
+        log "  -> $name completed"
+    else
+        STAGE_FAIL=$((STAGE_FAIL + 1))
+        log "  !! $name failed (continuing)"
+    fi
+}
+
+# Architecture check
+CURRENT_ARCH=$(uname -m)
+SOURCE_ARCH="{{.Meta.SourceArch}}"
+if [ "$CURRENT_ARCH" != "$SOURCE_ARCH" ] && [ -n "$SOURCE_ARCH" ]; then
+    log "WARNING: Architecture mismatch: snapshot from $SOURCE_ARCH, running on $CURRENT_ARCH"
+    log "  Some packages may need Rosetta 2 or different versions"
+fi
+
+START_TIME=$(date +%s)
 log "machinist restore started"
+log "Source: {{.Meta.SourceHostname}} ({{.Meta.SourceOSVersion}}, {{.Meta.SourceArch}})"
 
 {{if .Homebrew}}
+do_homebrew() {
 {{template "homebrew" .Homebrew}}
+}
+run_stage "Homebrew" do_homebrew
 {{end}}
 
 {{if .Shell}}
+do_shell() {
 {{template "shell" .Shell}}
+}
+run_stage "Shell Configuration" do_shell
 {{end}}
 
 {{if .GitRepos}}
+do_git_repos() {
 {{template "git-repos" .GitRepos}}
+}
+run_stage "Git Repositories" do_git_repos
 {{end}}
 
 {{if .Node}}
+do_node() {
 {{template "node" .Node}}
+}
+run_stage "Node.js" do_node
 {{end}}
 
 {{if .Python}}
+do_python() {
 {{template "python" .Python}}
+}
+run_stage "Python" do_python
 {{end}}
 
 {{if .Rust}}
+do_rust() {
 {{template "rust" .Rust}}
+}
+run_stage "Rust" do_rust
 {{end}}
 
 {{if .VSCode}}
+do_vscode() {
 {{template "vscode" .VSCode}}
+}
+run_stage "Visual Studio Code" do_vscode
 {{end}}
 
 {{if .Cursor}}
+do_cursor() {
 {{template "cursor" .Cursor}}
+}
+run_stage "Cursor" do_cursor
 {{end}}
 
 {{if .MacOSDefaults}}
+do_macos_defaults() {
 {{template "macos-defaults" .MacOSDefaults}}
+}
+run_stage "macOS Defaults" do_macos_defaults
 {{end}}
 
 {{if .Apps}}
+do_apps() {
 {{template "apps" .Apps}}
+}
+run_stage "Mac App Store Apps" do_apps
 {{end}}
 
 {{if .Fonts}}
+do_fonts() {
 {{template "fonts" .Fonts}}
+}
+run_stage "Fonts" do_fonts
 {{end}}
 
 {{if .Folders}}
+do_folders() {
 {{template "folders" .Folders}}
+}
+run_stage "Folder Structure" do_folders
 {{end}}
 
 {{if or .Crontab .LaunchAgents}}
+do_scheduled() {
 {{template "scheduled" .}}
+}
+run_stage "Scheduled Tasks" do_scheduled
 {{end}}
 
-log "machinist restore completed"
+END_TIME=$(date +%s)
+ELAPSED=$((END_TIME - START_TIME))
+log ""
+log "machinist restore completed in ${ELAPSED}s"
+log "  Passed: $STAGE_PASS stages succeeded"
+log "  Failed: $STAGE_FAIL stages failed"
+log "  Skipped: $STAGE_SKIP stages skipped"
 echo ""
-echo "✓ Restore complete. Check $LOGFILE for details."
+echo "Check $LOGFILE for details."

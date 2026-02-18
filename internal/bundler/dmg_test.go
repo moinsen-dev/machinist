@@ -104,6 +104,42 @@ func TestPrepareBundleDir_WithConfigFiles(t *testing.T) {
 	assert.Equal(t, zprofileContent, string(copiedZprofile))
 }
 
+func TestPrepareBundleDir_IncludesChecklist(t *testing.T) {
+	snap := &domain.Snapshot{
+		Meta: newMeta(),
+		Homebrew: &domain.HomebrewSection{
+			Formulae: []domain.Package{{Name: "git"}},
+		},
+	}
+
+	outputDir := t.TempDir()
+	bundleDir := filepath.Join(outputDir, "bundle")
+
+	err := PrepareBundleDir(snap, bundleDir, "")
+	require.NoError(t, err)
+
+	// POST_RESTORE_CHECKLIST.md should exist
+	checklistPath := filepath.Join(bundleDir, "POST_RESTORE_CHECKLIST.md")
+	checklistData, err := os.ReadFile(checklistPath)
+	require.NoError(t, err)
+	checklistContent := string(checklistData)
+
+	assert.Contains(t, checklistContent, "Post-Restore Checklist")
+	assert.Contains(t, checklistContent, "test-mac")
+	assert.Contains(t, checklistContent, "macOS Permissions")
+	assert.Contains(t, checklistContent, "ssh -T git@github.com")
+
+	// README.md should exist
+	readmePath := filepath.Join(bundleDir, "README.md")
+	readmeData, err := os.ReadFile(readmePath)
+	require.NoError(t, err)
+	readmeContent := string(readmeData)
+
+	assert.Contains(t, readmeContent, "Machinist Restore Bundle")
+	assert.Contains(t, readmeContent, "test-mac")
+	assert.Contains(t, readmeContent, "install.command")
+}
+
 func TestCreateDMG(t *testing.T) {
 	sourceDir := t.TempDir()
 	outputPath := filepath.Join(t.TempDir(), "test.dmg")

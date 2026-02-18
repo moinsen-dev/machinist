@@ -1,6 +1,4 @@
 {{define "git-repos"}}
-stage "Git Repositories"
-
 {{range .Repositories}}
 if [ ! -d "{{.Path}}" ]; then
     log "Cloning {{.RemoteURL}} → {{.Path}}"

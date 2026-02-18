@@ -1,0 +1,28 @@
+# Post-Restore Checklist
+
+Restored from: **{{.Meta.SourceHostname}}** ({{.Meta.SourceOSVersion}}, {{.Meta.SourceArch}})
+Generated: {{.Meta.CreatedAt}}
+
+The following items could not be automated and need manual attention:
+
+## macOS Permissions (TCC)
+- [ ] Grant Terminal/iTerm2 Full Disk Access (System Preferences -> Privacy & Security)
+- [ ] Grant accessibility permissions to installed apps (Raycast, Rectangle, etc.)
+
+## Browser
+- [ ] Sign in to browsers and sync extensions
+- [ ] Import bookmarks if needed
+
+## Accounts & Credentials
+- [ ] Sign in to Mac App Store
+- [ ] Sign in to Xcode with Apple ID
+- [ ] Configure cloud storage (iCloud, Dropbox, etc.)
+- [ ] Set up VPN connections
+- [ ] Import Bluetooth device pairings
+
+## Git & SSH
+- [ ] Test SSH key authentication: `ssh -T git@github.com`
+- [ ] Verify git signing works: `git log --show-signature`
+
+## Verification
+- [ ] Run `machinist snapshot --dry-run` on the new machine to compare

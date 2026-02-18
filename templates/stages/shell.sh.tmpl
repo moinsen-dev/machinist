@@ -1,6 +1,4 @@
 {{define "shell"}}
-stage "Shell Configuration"
-
 {{range .ConfigFiles}}
 if [ -f "configs/{{.Source}}" ]; then
     log "Restoring {{.Source}}"

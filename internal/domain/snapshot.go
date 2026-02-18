@@ -77,6 +77,52 @@ func NewSnapshot(hostname, osVersion, arch, machinistVersion string) *Snapshot {
 	}
 }
 
+// StageCount returns the number of restore stages that will be executed,
+// based on which snapshot sections are non-nil.
+func (s *Snapshot) StageCount() int {
+	count := 0
+	if s.Homebrew != nil {
+		count++
+	}
+	if s.Shell != nil {
+		count++
+	}
+	if s.GitRepos != nil {
+		count++
+	}
+	if s.Node != nil {
+		count++
+	}
+	if s.Python != nil {
+		count++
+	}
+	if s.Rust != nil {
+		count++
+	}
+	if s.VSCode != nil {
+		count++
+	}
+	if s.Cursor != nil {
+		count++
+	}
+	if s.MacOSDefaults != nil {
+		count++
+	}
+	if s.Apps != nil {
+		count++
+	}
+	if s.Fonts != nil {
+		count++
+	}
+	if s.Folders != nil {
+		count++
+	}
+	if s.Crontab != nil || s.LaunchAgents != nil {
+		count++
+	}
+	return count
+}
+
 // ---------------------------------------------------------------------------
 // Section types — each corresponds to a TOML section in the manifest.
 // ---------------------------------------------------------------------------

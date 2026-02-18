@@ -1,6 +1,4 @@
 {{define "node"}}
-stage "Node.js"
-
 {{if eq .Manager "nvm"}}
 # Install nvm if not present
 if [ ! -d "$HOME/.nvm" ]; then

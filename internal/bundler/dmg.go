@@ -43,6 +43,26 @@ func PrepareBundleDir(snapshot *domain.Snapshot, outputDir string, configSourceD
 		return fmt.Errorf("write install.command: %w", err)
 	}
 
+	// Generate and write README.md
+	readme, err := GenerateReadme(snapshot)
+	if err != nil {
+		return fmt.Errorf("generate README: %w", err)
+	}
+	readmePath := filepath.Join(outputDir, "README.md")
+	if err := os.WriteFile(readmePath, []byte(readme), 0644); err != nil {
+		return fmt.Errorf("write README.md: %w", err)
+	}
+
+	// Generate and write POST_RESTORE_CHECKLIST.md
+	checklist, err := GenerateChecklist(snapshot)
+	if err != nil {
+		return fmt.Errorf("generate checklist: %w", err)
+	}
+	checklistPath := filepath.Join(outputDir, "POST_RESTORE_CHECKLIST.md")
+	if err := os.WriteFile(checklistPath, []byte(checklist), 0644); err != nil {
+		return fmt.Errorf("write POST_RESTORE_CHECKLIST.md: %w", err)
+	}
+
 	// Copy config files referenced in snapshot sections to configs/
 	configFiles := collectConfigFiles(snapshot)
 	for _, cf := range configFiles {

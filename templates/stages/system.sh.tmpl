@@ -1,6 +1,4 @@
 {{define "apps"}}
-stage "Mac App Store Apps"
-
 if ! command -v mas &>/dev/null; then
     log "Installing mas (Mac App Store CLI)..."
     brew install mas || log "Warning: Could not install mas"
@@ -13,8 +11,6 @@ mas install {{.ID}} 2>/dev/null || log "Warning: Could not install {{.Name}}"
 {{end}}
 
 {{define "fonts"}}
-stage "Fonts"
-
 {{range .HomebrewFonts}}
 log "Installing font {{.}}"
 brew install --cask "{{.}}" 2>/dev/null || true
@@ -29,8 +25,6 @@ fi
 {{end}}
 
 {{define "folders"}}
-stage "Folder Structure"
-
 {{range .Structure}}
 log "Creating ~/{{.}}"
 mkdir -p "$HOME/{{.}}"
@@ -38,8 +32,6 @@ mkdir -p "$HOME/{{.}}"
 {{end}}
 
 {{define "scheduled"}}
-stage "Scheduled Tasks"
-
 {{if .Crontab}}
 {{if .Crontab.Entries}}
 log "Restoring crontab"

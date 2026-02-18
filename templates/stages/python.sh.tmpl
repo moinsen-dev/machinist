@@ -1,6 +1,4 @@
 {{define "python"}}
-stage "Python"
-
 {{if eq .Manager "pyenv"}}
 if ! command -v pyenv &>/dev/null; then
     log "Installing pyenv..."
