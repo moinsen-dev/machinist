@@ -233,6 +233,165 @@ func TestComposeManifest_NoAddPackages(t *testing.T) {
 	assert.Contains(t, text, "[homebrew]")
 }
 
+func TestValidateManifest_Valid(t *testing.T) {
+	srv := NewMachinistServer(scanner.NewRegistry())
+
+	manifest := `
+[homebrew]
+taps = ["homebrew/core"]
+
+[[homebrew.formulae]]
+name = "git"
+
+[shell]
+default_shell = "/bin/zsh"
+`
+	result, err := callTool(srv, "validate_manifest", map[string]interface{}{
+		"manifest": manifest,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.False(t, result.IsError)
+
+	text := getTextContent(t, result)
+
+	var resp map[string]interface{}
+	err = json.Unmarshal([]byte(text), &resp)
+	require.NoError(t, err)
+	assert.Equal(t, true, resp["valid"])
+
+	sections, ok := resp["sections"].([]interface{})
+	require.True(t, ok, "sections should be an array")
+
+	sectionNames := make([]string, len(sections))
+	for i, s := range sections {
+		sectionNames[i] = s.(string)
+	}
+	assert.Contains(t, sectionNames, "homebrew")
+	assert.Contains(t, sectionNames, "shell")
+}
+
+func TestValidateManifest_Invalid(t *testing.T) {
+	srv := NewMachinistServer(scanner.NewRegistry())
+
+	manifest := `this is not valid [[[ toml content !!!`
+
+	result, err := callTool(srv, "validate_manifest", map[string]interface{}{
+		"manifest": manifest,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.False(t, result.IsError) // tool returns JSON, not an MCP error
+
+	text := getTextContent(t, result)
+
+	var resp map[string]interface{}
+	err = json.Unmarshal([]byte(text), &resp)
+	require.NoError(t, err)
+	assert.Equal(t, false, resp["valid"])
+	assert.Contains(t, resp["error"].(string), "parse error")
+}
+
+func TestDiffManifests(t *testing.T) {
+	srv := NewMachinistServer(scanner.NewRegistry())
+
+	manifestA := `
+[homebrew]
+taps = ["homebrew/core"]
+
+[[homebrew.formulae]]
+name = "git"
+
+[rust]
+default_toolchain = "stable"
+`
+	manifestB := `
+[homebrew]
+taps = ["homebrew/core"]
+
+[[homebrew.formulae]]
+name = "git"
+
+[python]
+manager = "pyenv"
+`
+	result, err := callTool(srv, "diff_manifests", map[string]interface{}{
+		"manifest_a": manifestA,
+		"manifest_b": manifestB,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.False(t, result.IsError)
+
+	text := getTextContent(t, result)
+	assert.Contains(t, text, "rust")
+	assert.Contains(t, text, "python")
+	assert.Contains(t, text, "homebrew")
+	assert.Contains(t, text, "Only in A:")
+	assert.Contains(t, text, "Only in B:")
+	assert.Contains(t, text, "In both:")
+}
+
+func TestDiffManifests_HomebrewDiff(t *testing.T) {
+	srv := NewMachinistServer(scanner.NewRegistry())
+
+	manifestA := `
+[homebrew]
+taps = ["homebrew/core"]
+
+[[homebrew.formulae]]
+name = "git"
+
+[[homebrew.formulae]]
+name = "wget"
+
+[[homebrew.formulae]]
+name = "tree"
+`
+	manifestB := `
+[homebrew]
+taps = ["homebrew/core"]
+
+[[homebrew.formulae]]
+name = "git"
+
+[[homebrew.formulae]]
+name = "httpie"
+`
+	result, err := callTool(srv, "diff_manifests", map[string]interface{}{
+		"manifest_a": manifestA,
+		"manifest_b": manifestB,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.False(t, result.IsError)
+
+	text := getTextContent(t, result)
+	assert.Contains(t, text, "Homebrew diff:")
+	assert.Contains(t, text, "wget")
+	assert.Contains(t, text, "tree")
+	assert.Contains(t, text, "httpie")
+}
+
+func TestBuildDMG_InvalidManifest(t *testing.T) {
+	srv := NewMachinistServer(scanner.NewRegistry())
+
+	result, err := callTool(srv, "build_dmg", map[string]interface{}{
+		"manifest": "not valid toml [[[",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.False(t, result.IsError) // returns JSON with success=false
+
+	text := getTextContent(t, result)
+
+	var resp map[string]interface{}
+	err = json.Unmarshal([]byte(text), &resp)
+	require.NoError(t, err)
+	assert.Equal(t, false, resp["success"])
+	assert.Contains(t, resp["error"].(string), "invalid manifest")
+}
+
 func TestMCPServer(t *testing.T) {
 	reg := scanner.NewRegistry()
 	srv := NewMachinistServer(reg)

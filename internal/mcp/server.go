@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"sort"
 	"strings"
@@ -13,8 +14,11 @@ import (
 	gomcp "github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 
+	"github.com/moinsen-dev/machinist/internal/bundler"
 	"github.com/moinsen-dev/machinist/internal/domain"
 	"github.com/moinsen-dev/machinist/internal/scanner"
+	"github.com/moinsen-dev/machinist/internal/util"
+	"github.com/moinsen-dev/machinist/profiles"
 )
 
 // MachinistServer wraps the MCP server with the machinist scanner registry.
@@ -28,11 +32,12 @@ type MachinistServer struct {
 func NewMachinistServer(registry *scanner.Registry) *MachinistServer {
 	s := &MachinistServer{
 		registry: registry,
-		server:   server.NewMCPServer("machinist", "0.1.0"),
+		server:   server.NewMCPServer("machinist", "0.1.0", server.WithResourceCapabilities(false, false)),
 		handlers: make(map[string]server.ToolHandlerFunc),
 	}
 
 	s.registerTools()
+	s.registerResources()
 	return s
 }
 
@@ -98,6 +103,52 @@ func (s *MachinistServer) registerTools() {
 			),
 		),
 		s.handleComposeManifest,
+	)
+
+	s.addTool("validate_manifest",
+		gomcp.NewTool("validate_manifest",
+			gomcp.WithDescription("Validate a TOML manifest by attempting to unmarshal it into a Snapshot"),
+			gomcp.WithString("manifest",
+				gomcp.Required(),
+				gomcp.Description("Raw TOML content to validate"),
+			),
+		),
+		s.handleValidateManifest,
+	)
+
+	s.addTool("build_dmg",
+		gomcp.NewTool("build_dmg",
+			gomcp.WithDescription("Build a DMG disk image from a TOML manifest"),
+			gomcp.WithString("manifest",
+				gomcp.Required(),
+				gomcp.Description("Raw TOML manifest content"),
+			),
+			gomcp.WithString("output_path",
+				gomcp.Description("Output path for the DMG file (default: machinist-setup.dmg)"),
+			),
+			gomcp.WithString("password",
+				gomcp.Description("Optional password for AES-256 encryption"),
+			),
+			gomcp.WithString("volume_name",
+				gomcp.Description("Volume name for the DMG (default: machinist)"),
+			),
+		),
+		s.handleBuildDMG,
+	)
+
+	s.addTool("diff_manifests",
+		gomcp.NewTool("diff_manifests",
+			gomcp.WithDescription("Compare two TOML manifests and return a human-readable diff summary"),
+			gomcp.WithString("manifest_a",
+				gomcp.Required(),
+				gomcp.Description("First TOML manifest"),
+			),
+			gomcp.WithString("manifest_b",
+				gomcp.Required(),
+				gomcp.Description("Second TOML manifest"),
+			),
+		),
+		s.handleDiffManifests,
 	)
 }
 
@@ -250,6 +301,278 @@ func (s *MachinistServer) handleComposeManifest(_ context.Context, req gomcp.Cal
 		return gomcp.NewToolResultError(fmt.Sprintf("failed to marshal manifest: %v", err)), nil
 	}
 	return gomcp.NewToolResultText(string(data)), nil
+}
+
+// handleValidateManifest validates a TOML manifest by attempting to unmarshal it.
+func (s *MachinistServer) handleValidateManifest(_ context.Context, req gomcp.CallToolRequest) (*gomcp.CallToolResult, error) {
+	manifest, err := req.RequireString("manifest")
+	if err != nil {
+		return gomcp.NewToolResultError(err.Error()), nil
+	}
+
+	snap, err := domain.UnmarshalManifest([]byte(manifest))
+	if err != nil {
+		result := map[string]interface{}{
+			"valid": false,
+			"error": fmt.Sprintf("parse error: %v", err),
+		}
+		data, _ := json.Marshal(result)
+		return gomcp.NewToolResultText(string(data)), nil
+	}
+
+	sections := populatedSections(snap)
+	result := map[string]interface{}{
+		"valid":    true,
+		"sections": sections,
+	}
+	data, err := json.Marshal(result)
+	if err != nil {
+		return gomcp.NewToolResultError(fmt.Sprintf("failed to marshal result: %v", err)), nil
+	}
+	return gomcp.NewToolResultText(string(data)), nil
+}
+
+// handleBuildDMG builds a DMG disk image from a TOML manifest.
+func (s *MachinistServer) handleBuildDMG(ctx context.Context, req gomcp.CallToolRequest) (*gomcp.CallToolResult, error) {
+	manifest, err := req.RequireString("manifest")
+	if err != nil {
+		return gomcp.NewToolResultError(err.Error()), nil
+	}
+
+	snap, err := domain.UnmarshalManifest([]byte(manifest))
+	if err != nil {
+		result := map[string]interface{}{
+			"success": false,
+			"error":   fmt.Sprintf("invalid manifest: %v", err),
+		}
+		data, _ := json.Marshal(result)
+		return gomcp.NewToolResultText(string(data)), nil
+	}
+
+	outputPath := req.GetString("output_path", "machinist-setup.dmg")
+	volumeName := req.GetString("volume_name", "machinist")
+	password := req.GetString("password", "")
+
+	cmd := &util.RealCommandRunner{}
+	opts := bundler.BundleOptions{
+		Password:   password,
+		VolumeName: volumeName,
+	}
+
+	if err := bundler.Bundle(ctx, cmd, snap, outputPath, opts); err != nil {
+		result := map[string]interface{}{
+			"success": false,
+			"error":   fmt.Sprintf("bundle failed: %v", err),
+		}
+		data, _ := json.Marshal(result)
+		return gomcp.NewToolResultText(string(data)), nil
+	}
+
+	result := map[string]interface{}{
+		"success": true,
+		"path":    outputPath,
+	}
+	data, err := json.Marshal(result)
+	if err != nil {
+		return gomcp.NewToolResultError(fmt.Sprintf("failed to marshal result: %v", err)), nil
+	}
+	return gomcp.NewToolResultText(string(data)), nil
+}
+
+// handleDiffManifests compares two TOML manifests and returns a human-readable diff.
+func (s *MachinistServer) handleDiffManifests(_ context.Context, req gomcp.CallToolRequest) (*gomcp.CallToolResult, error) {
+	manifestA, err := req.RequireString("manifest_a")
+	if err != nil {
+		return gomcp.NewToolResultError(err.Error()), nil
+	}
+	manifestB, err := req.RequireString("manifest_b")
+	if err != nil {
+		return gomcp.NewToolResultError(err.Error()), nil
+	}
+
+	snapA, err := domain.UnmarshalManifest([]byte(manifestA))
+	if err != nil {
+		return gomcp.NewToolResultError(fmt.Sprintf("failed to parse manifest_a: %v", err)), nil
+	}
+	snapB, err := domain.UnmarshalManifest([]byte(manifestB))
+	if err != nil {
+		return gomcp.NewToolResultError(fmt.Sprintf("failed to parse manifest_b: %v", err)), nil
+	}
+
+	sectionsA := populatedSections(snapA)
+	sectionsB := populatedSections(snapB)
+
+	setA := make(map[string]bool, len(sectionsA))
+	for _, s := range sectionsA {
+		setA[s] = true
+	}
+	setB := make(map[string]bool, len(sectionsB))
+	for _, s := range sectionsB {
+		setB[s] = true
+	}
+
+	var onlyA, onlyB, both []string
+	for _, s := range sectionsA {
+		if setB[s] {
+			both = append(both, s)
+		} else {
+			onlyA = append(onlyA, s)
+		}
+	}
+	for _, s := range sectionsB {
+		if !setA[s] {
+			onlyB = append(onlyB, s)
+		}
+	}
+
+	sort.Strings(onlyA)
+	sort.Strings(onlyB)
+	sort.Strings(both)
+
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("Only in A: %v\n", onlyA))
+	sb.WriteString(fmt.Sprintf("Only in B: %v\n", onlyB))
+	sb.WriteString(fmt.Sprintf("In both: %v\n", both))
+
+	// Homebrew package-level diff
+	if snapA.Homebrew != nil && snapB.Homebrew != nil {
+		pkgsA := make(map[string]bool)
+		for _, p := range snapA.Homebrew.Formulae {
+			pkgsA[p.Name] = true
+		}
+		for _, p := range snapA.Homebrew.Casks {
+			pkgsA[p.Name] = true
+		}
+		pkgsB := make(map[string]bool)
+		for _, p := range snapB.Homebrew.Formulae {
+			pkgsB[p.Name] = true
+		}
+		for _, p := range snapB.Homebrew.Casks {
+			pkgsB[p.Name] = true
+		}
+
+		var hOnlyA, hOnlyB []string
+		for name := range pkgsA {
+			if !pkgsB[name] {
+				hOnlyA = append(hOnlyA, name)
+			}
+		}
+		for name := range pkgsB {
+			if !pkgsA[name] {
+				hOnlyB = append(hOnlyB, name)
+			}
+		}
+		sort.Strings(hOnlyA)
+		sort.Strings(hOnlyB)
+
+		if len(hOnlyA) > 0 || len(hOnlyB) > 0 {
+			sb.WriteString("\nHomebrew diff:\n")
+			if len(hOnlyA) > 0 {
+				sb.WriteString(fmt.Sprintf("  Only in A: %v\n", hOnlyA))
+			}
+			if len(hOnlyB) > 0 {
+				sb.WriteString(fmt.Sprintf("  Only in B: %v\n", hOnlyB))
+			}
+		}
+	}
+
+	return gomcp.NewToolResultText(sb.String()), nil
+}
+
+// populatedSections returns the TOML tag names of non-nil pointer sections in a Snapshot.
+func populatedSections(snap *domain.Snapshot) []string {
+	var sections []string
+	v := reflect.ValueOf(*snap)
+	t := v.Type()
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Field(i)
+		if field.Kind() == reflect.Ptr && !field.IsNil() {
+			tag := t.Field(i).Tag.Get("toml")
+			if tag == "" {
+				continue
+			}
+			// Strip ",omitempty" or similar suffixes
+			if idx := strings.Index(tag, ","); idx != -1 {
+				tag = tag[:idx]
+			}
+			sections = append(sections, tag)
+		}
+	}
+	return sections
+}
+
+// registerResources registers MCP resources for system snapshot and profiles.
+func (s *MachinistServer) registerResources() {
+	// Static resource: system snapshot
+	s.server.AddResource(
+		gomcp.NewResource(
+			"machinist://system/snapshot",
+			"System Snapshot",
+			gomcp.WithResourceDescription("Returns the current system snapshot as TOML by running all scanners"),
+			gomcp.WithMIMEType("application/toml"),
+		),
+		s.handleSnapshotResource,
+	)
+
+	// Template resource: profiles by name
+	s.server.AddResourceTemplate(
+		gomcp.NewResourceTemplate(
+			"machinist://profiles/{name}",
+			"Profile",
+			gomcp.WithTemplateDescription("Returns a specific profile TOML by name"),
+			gomcp.WithTemplateMIMEType("application/toml"),
+		),
+		s.handleProfileResource,
+	)
+}
+
+// handleSnapshotResource returns the current system snapshot as TOML.
+func (s *MachinistServer) handleSnapshotResource(ctx context.Context, req gomcp.ReadResourceRequest) ([]gomcp.ResourceContents, error) {
+	snap, errs := s.registry.ScanAll(ctx)
+	if len(errs) > 0 && snap == nil {
+		return nil, fmt.Errorf("scan failed: %v", errs[0])
+	}
+
+	data, err := domain.MarshalManifest(snap)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal manifest: %w", err)
+	}
+
+	return []gomcp.ResourceContents{
+		gomcp.TextResourceContents{
+			URI:      "machinist://system/snapshot",
+			MIMEType: "application/toml",
+			Text:     string(data),
+		},
+	}, nil
+}
+
+// handleProfileResource returns a specific profile TOML by name.
+func (s *MachinistServer) handleProfileResource(_ context.Context, req gomcp.ReadResourceRequest) ([]gomcp.ResourceContents, error) {
+	uri := req.Params.URI
+	// Extract name from URI: machinist://profiles/{name}
+	name := strings.TrimPrefix(uri, "machinist://profiles/")
+	if name == "" || name == uri {
+		return nil, fmt.Errorf("invalid profile URI: %s", uri)
+	}
+
+	snap, err := profiles.Get(name)
+	if err != nil {
+		return nil, fmt.Errorf("profile %q not found: %w", name, err)
+	}
+
+	data, err := domain.MarshalManifest(snap)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal profile: %w", err)
+	}
+
+	return []gomcp.ResourceContents{
+		gomcp.TextResourceContents{
+			URI:      uri,
+			MIMEType: "application/toml",
+			Text:     string(data),
+		},
+	}, nil
 }
 
 // profilesDirectory returns the path to the profiles directory.
