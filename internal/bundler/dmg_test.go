@@ -110,6 +110,9 @@ func TestPrepareBundleDir_IncludesChecklist(t *testing.T) {
 		Homebrew: &domain.HomebrewSection{
 			Formulae: []domain.Package{{Name: "git"}},
 		},
+		SSH: &domain.SSHSection{
+			Keys: []string{"id_ed25519"},
+		},
 	}
 
 	outputDir := t.TempDir()

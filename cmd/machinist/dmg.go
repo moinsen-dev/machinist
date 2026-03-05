@@ -108,7 +108,7 @@ func runInteractiveScan(cmd *cobra.Command, reg *scanner.Registry, ctx context.C
 			errs = append(errs, scanErr)
 			continue
 		}
-		applyResultToSnapshot(snap, scanResult)
+		scanner.ApplyResult(snap, scanResult)
 	}
 
 	snap.Meta.ScanDurationSecs = time.Since(start).Seconds()

@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
 	"reflect"
 	"runtime"
 	"sort"
@@ -197,7 +195,7 @@ func (s *MachinistServer) handleScan(ctx context.Context, req gomcp.CallToolRequ
 
 	// Build a minimal snapshot with just this result
 	snap := domain.NewSnapshot("mcp-scan", runtime.GOOS, runtime.GOARCH, "0.1.0")
-	applyResult(snap, result)
+	scanner.ApplyResult(snap, result)
 
 	data, err := domain.MarshalManifest(snap)
 	if err != nil {
@@ -233,23 +231,10 @@ func (s *MachinistServer) handleScanAll(ctx context.Context, _ gomcp.CallToolReq
 
 // handleListProfiles returns a JSON array of profile names.
 func (s *MachinistServer) handleListProfiles(_ context.Context, _ gomcp.CallToolRequest) (*gomcp.CallToolResult, error) {
-	profilesDir := profilesDirectory()
-	entries, err := os.ReadDir(profilesDir)
+	names, err := profiles.List()
 	if err != nil {
-		return gomcp.NewToolResultError(fmt.Sprintf("failed to read profiles directory: %v", err)), nil
+		return gomcp.NewToolResultError(fmt.Sprintf("failed to list profiles: %v", err)), nil
 	}
-
-	var names []string
-	for _, e := range entries {
-		if e.IsDir() {
-			continue
-		}
-		name := e.Name()
-		if strings.HasSuffix(name, ".toml") {
-			names = append(names, strings.TrimSuffix(name, ".toml"))
-		}
-	}
-	sort.Strings(names)
 
 	data, err := json.Marshal(names)
 	if err != nil {
@@ -265,12 +250,15 @@ func (s *MachinistServer) handleGetProfile(_ context.Context, req gomcp.CallTool
 		return gomcp.NewToolResultError(err.Error()), nil
 	}
 
-	profilePath := filepath.Join(profilesDirectory(), name+".toml")
-	data, err := os.ReadFile(profilePath)
+	snap, err := profiles.Get(name)
 	if err != nil {
 		return gomcp.NewToolResultError(fmt.Sprintf("profile %q not found: %v", name, err)), nil
 	}
-	return gomcp.NewToolResultText(string(data)), nil
+	toml, err := domain.MarshalManifest(snap)
+	if err != nil {
+		return gomcp.NewToolResultError(fmt.Sprintf("failed to marshal profile: %v", err)), nil
+	}
+	return gomcp.NewToolResultText(string(toml)), nil
 }
 
 // handleComposeManifest loads a base profile and appends optional packages.
@@ -280,8 +268,7 @@ func (s *MachinistServer) handleComposeManifest(_ context.Context, req gomcp.Cal
 		return gomcp.NewToolResultError(err.Error()), nil
 	}
 
-	profilePath := filepath.Join(profilesDirectory(), baseProfile+".toml")
-	snap, err := domain.ReadManifest(profilePath)
+	snap, err := profiles.Get(baseProfile)
 	if err != nil {
 		return gomcp.NewToolResultError(fmt.Sprintf("failed to load profile %q: %v", baseProfile, err)), nil
 	}
@@ -575,83 +562,3 @@ func (s *MachinistServer) handleProfileResource(_ context.Context, req gomcp.Rea
 	}, nil
 }
 
-// profilesDirectory returns the path to the profiles directory.
-func profilesDirectory() string {
-	// Walk up from the executable or use a known relative path.
-	// For development, find relative to the source tree.
-	// Try finding the profiles dir relative to the working directory.
-	if dir, err := findProjectRoot(); err == nil {
-		return filepath.Join(dir, "profiles")
-	}
-	return "profiles"
-}
-
-// findProjectRoot walks up from the working directory looking for go.mod.
-func findProjectRoot() (string, error) {
-	dir, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-	for {
-		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
-			return dir, nil
-		}
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			return "", fmt.Errorf("project root not found")
-		}
-		dir = parent
-	}
-}
-
-// applyResult maps a ScanResult's populated fields onto the Snapshot.
-func applyResult(snap *domain.Snapshot, result *scanner.ScanResult) {
-	if result.Homebrew != nil {
-		snap.Homebrew = result.Homebrew
-	}
-	if result.Shell != nil {
-		snap.Shell = result.Shell
-	}
-	if result.Node != nil {
-		snap.Node = result.Node
-	}
-	if result.Python != nil {
-		snap.Python = result.Python
-	}
-	if result.Rust != nil {
-		snap.Rust = result.Rust
-	}
-	if result.Git != nil {
-		snap.Git = result.Git
-	}
-	if result.GitRepos != nil {
-		snap.GitRepos = result.GitRepos
-	}
-	if result.VSCode != nil {
-		snap.VSCode = result.VSCode
-	}
-	if result.Cursor != nil {
-		snap.Cursor = result.Cursor
-	}
-	if result.Docker != nil {
-		snap.Docker = result.Docker
-	}
-	if result.MacOSDefaults != nil {
-		snap.MacOSDefaults = result.MacOSDefaults
-	}
-	if result.Folders != nil {
-		snap.Folders = result.Folders
-	}
-	if result.Fonts != nil {
-		snap.Fonts = result.Fonts
-	}
-	if result.Crontab != nil {
-		snap.Crontab = result.Crontab
-	}
-	if result.LaunchAgents != nil {
-		snap.LaunchAgents = result.LaunchAgents
-	}
-	if result.Apps != nil {
-		snap.Apps = result.Apps
-	}
-}

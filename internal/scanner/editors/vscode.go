@@ -115,19 +115,23 @@ func (s *CursorScanner) Scan(ctx context.Context) (*scanner.ScanResult, error) {
 		section.Extensions = extensions
 	}
 
-	// 2. Check config directory for settings.json.
+	// 2. Check config directory for settings.json and keybindings.json.
 	configDir := filepath.Join(s.homeDir, "Library", "Application Support", "Cursor", "User")
-	settingsPath := filepath.Join(configDir, "settings.json")
-	if util.FileExists(settingsPath) {
-		found = true
-		hash, hashErr := util.ContentHash(settingsPath)
-		if hashErr == nil {
-			section.ConfigFiles = append(section.ConfigFiles, domain.ConfigFile{
-				Source:      "Library/Application Support/Cursor/User/settings.json",
-				BundlePath:  "configs/cursor/settings.json",
-				ContentHash: hash,
-			})
+	for _, name := range []string{"settings.json", "keybindings.json"} {
+		absPath := filepath.Join(configDir, name)
+		if !util.FileExists(absPath) {
+			continue
 		}
+		found = true
+		hash, hashErr := util.ContentHash(absPath)
+		if hashErr != nil {
+			continue
+		}
+		section.ConfigFiles = append(section.ConfigFiles, domain.ConfigFile{
+			Source:      "Library/Application Support/Cursor/User/" + name,
+			BundlePath:  filepath.Join("configs", "cursor", name),
+			ContentHash: hash,
+		})
 	}
 
 	if !found {

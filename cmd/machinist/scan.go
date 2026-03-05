@@ -3,10 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/moinsen-dev/machinist/internal/domain"
+	"github.com/moinsen-dev/machinist/internal/scanner"
+	gitscanner "github.com/moinsen-dev/machinist/internal/scanner/git"
+	"github.com/moinsen-dev/machinist/internal/util"
 	"github.com/spf13/cobra"
 )
+
+var scanSearchPaths string
 
 var scanCmd = &cobra.Command{
 	Use:   "scan [scanner-name]",
@@ -16,13 +22,28 @@ var scanCmd = &cobra.Command{
 		reg := newRegistry()
 		ctx := context.Background()
 
-		result, err := reg.ScanOne(ctx, args[0])
+		var result *scanner.ScanResult
+		var err error
+
+		if scanSearchPaths != "" && args[0] == "git-repos" {
+			paths := strings.Split(scanSearchPaths, ",")
+			for i := range paths {
+				paths[i] = strings.TrimSpace(paths[i])
+			}
+			cmdRunner := &util.RealCommandRunner{}
+			customReg := scanner.NewRegistry()
+			customReg.Register(gitscanner.NewGitReposScanner(paths, cmdRunner))
+			result, err = customReg.ScanOne(ctx, args[0])
+		} else {
+			result, err = reg.ScanOne(ctx, args[0])
+		}
+
 		if err != nil {
 			return err
 		}
 
 		snap := domain.NewSnapshot("", "", "", Version)
-		applyResultToSnapshot(snap, result)
+		scanner.ApplyResult(snap, result)
 
 		data, err := domain.MarshalManifest(snap)
 		if err != nil {
@@ -35,5 +56,6 @@ var scanCmd = &cobra.Command{
 }
 
 func init() {
+	scanCmd.Flags().StringVar(&scanSearchPaths, "search-paths", "", "Comma-separated search paths for git-repos scanner")
 	rootCmd.AddCommand(scanCmd)
 }

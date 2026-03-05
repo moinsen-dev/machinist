@@ -344,6 +344,147 @@ func TestShellConfigScanner_Scan_AllDotfiles(t *testing.T) {
 	}
 }
 
+func TestShellConfigScanner_Scan_OhMyZshCustomPlugins(t *testing.T) {
+	homeDir := t.TempDir()
+
+	// Create .oh-my-zsh directory with some custom plugins.
+	omzDir := filepath.Join(homeDir, ".oh-my-zsh")
+	require.NoError(t, os.Mkdir(omzDir, 0755))
+	customPluginsDir := filepath.Join(omzDir, "custom", "plugins")
+	require.NoError(t, os.MkdirAll(customPluginsDir, 0755))
+
+	// Two plugin directories.
+	require.NoError(t, os.Mkdir(filepath.Join(customPluginsDir, "zsh-autosuggestions"), 0755))
+	require.NoError(t, os.Mkdir(filepath.Join(customPluginsDir, "zsh-syntax-highlighting"), 0755))
+
+	// A plain file in that directory should NOT be included.
+	require.NoError(t, os.WriteFile(filepath.Join(customPluginsDir, "readme.txt"), []byte("ignored"), 0644))
+
+	cmd := &util.MockCommandRunner{
+		Responses: map[string]util.MockResponse{
+			"sh -c echo $SHELL": {Output: "/bin/zsh"},
+		},
+	}
+	s := NewShellConfigScanner(homeDir, cmd)
+	result, err := s.Scan(context.Background())
+
+	require.NoError(t, err)
+	require.NotNil(t, result.Shell)
+	assert.Equal(t, "oh-my-zsh", result.Shell.Framework)
+
+	plugins := result.Shell.OhMyZshCustomPlugins
+	assert.Len(t, plugins, 2)
+
+	pluginSet := make(map[string]bool)
+	for _, p := range plugins {
+		pluginSet[p] = true
+	}
+	assert.True(t, pluginSet["zsh-autosuggestions"])
+	assert.True(t, pluginSet["zsh-syntax-highlighting"])
+}
+
+func TestShellConfigScanner_Scan_OhMyZshNoCustomPluginsDir(t *testing.T) {
+	homeDir := t.TempDir()
+
+	// .oh-my-zsh exists but no custom/plugins subdirectory.
+	require.NoError(t, os.Mkdir(filepath.Join(homeDir, ".oh-my-zsh"), 0755))
+
+	cmd := &util.MockCommandRunner{
+		Responses: map[string]util.MockResponse{
+			"sh -c echo $SHELL": {Output: "/bin/zsh"},
+		},
+	}
+	s := NewShellConfigScanner(homeDir, cmd)
+	result, err := s.Scan(context.Background())
+
+	require.NoError(t, err)
+	require.NotNil(t, result.Shell)
+	assert.Equal(t, "oh-my-zsh", result.Shell.Framework)
+	assert.Empty(t, result.Shell.OhMyZshCustomPlugins)
+}
+
+func TestShellConfigScanner_Scan_DirenvHomeDirenvrc(t *testing.T) {
+	homeDir := t.TempDir()
+
+	require.NoError(t, os.WriteFile(filepath.Join(homeDir, ".direnvrc"), []byte("# direnv config\n"), 0644))
+
+	cmd := &util.MockCommandRunner{
+		Responses: map[string]util.MockResponse{
+			"sh -c echo $SHELL": {Output: "/bin/zsh"},
+		},
+	}
+	s := NewShellConfigScanner(homeDir, cmd)
+	result, err := s.Scan(context.Background())
+
+	require.NoError(t, err)
+	require.NotNil(t, result.Shell)
+
+	found := false
+	for _, cf := range result.Shell.ConfigFiles {
+		if cf.Source == ".direnvrc" {
+			found = true
+			assert.NotEmpty(t, cf.ContentHash)
+		}
+	}
+	assert.True(t, found, ".direnvrc should be in ConfigFiles")
+}
+
+func TestShellConfigScanner_Scan_DirenvXDGDirenvrc(t *testing.T) {
+	homeDir := t.TempDir()
+
+	direnvDir := filepath.Join(homeDir, ".config", "direnv")
+	require.NoError(t, os.MkdirAll(direnvDir, 0755))
+	require.NoError(t, os.WriteFile(filepath.Join(direnvDir, "direnvrc"), []byte("# xdg direnv\n"), 0644))
+
+	cmd := &util.MockCommandRunner{
+		Responses: map[string]util.MockResponse{
+			"sh -c echo $SHELL": {Output: "/bin/zsh"},
+		},
+	}
+	s := NewShellConfigScanner(homeDir, cmd)
+	result, err := s.Scan(context.Background())
+
+	require.NoError(t, err)
+	require.NotNil(t, result.Shell)
+
+	found := false
+	for _, cf := range result.Shell.ConfigFiles {
+		if cf.Source == ".config/direnv/direnvrc" {
+			found = true
+			assert.NotEmpty(t, cf.ContentHash)
+		}
+	}
+	assert.True(t, found, ".config/direnv/direnvrc should be in ConfigFiles")
+}
+
+func TestShellConfigScanner_Scan_DirenvBothLocations(t *testing.T) {
+	homeDir := t.TempDir()
+
+	// Both locations present.
+	require.NoError(t, os.WriteFile(filepath.Join(homeDir, ".direnvrc"), []byte("# home\n"), 0644))
+	direnvDir := filepath.Join(homeDir, ".config", "direnv")
+	require.NoError(t, os.MkdirAll(direnvDir, 0755))
+	require.NoError(t, os.WriteFile(filepath.Join(direnvDir, "direnvrc"), []byte("# xdg\n"), 0644))
+
+	cmd := &util.MockCommandRunner{
+		Responses: map[string]util.MockResponse{
+			"sh -c echo $SHELL": {Output: "/bin/zsh"},
+		},
+	}
+	s := NewShellConfigScanner(homeDir, cmd)
+	result, err := s.Scan(context.Background())
+
+	require.NoError(t, err)
+	require.NotNil(t, result.Shell)
+
+	sources := make(map[string]bool)
+	for _, cf := range result.Shell.ConfigFiles {
+		sources[cf.Source] = true
+	}
+	assert.True(t, sources[".direnvrc"])
+	assert.True(t, sources[".config/direnv/direnvrc"])
+}
+
 func TestShellConfigScanner_Scan_ShellDetectionError(t *testing.T) {
 	homeDir := t.TempDir()
 

@@ -2,6 +2,7 @@ package shell
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 
 	"github.com/moinsen-dev/machinist/internal/domain"
@@ -65,13 +66,44 @@ func (s *ShellConfigScanner) Scan(ctx context.Context) (*scanner.ScanResult, err
 	// 3. Framework detection.
 	if util.DirExists(filepath.Join(s.homeDir, ".oh-my-zsh")) {
 		section.Framework = "oh-my-zsh"
+
+		// Collect custom plugins from ~/.oh-my-zsh/custom/plugins/.
+		customPluginsDir := filepath.Join(s.homeDir, ".oh-my-zsh", "custom", "plugins")
+		if entries, err := os.ReadDir(customPluginsDir); err == nil {
+			for _, entry := range entries {
+				if entry.IsDir() {
+					section.OhMyZshCustomPlugins = append(section.OhMyZshCustomPlugins, entry.Name())
+				}
+			}
+		}
 	} else if util.DirExists(filepath.Join(s.homeDir, ".oh-my-bash")) {
 		section.Framework = "oh-my-bash"
 	} else if util.DirExists(filepath.Join(s.homeDir, ".zprezto")) {
 		section.Framework = "prezto"
 	}
 
-	// 4. Prompt detection.
+	// 4. direnv config file detection.
+	direnvCandidates := []string{
+		".direnvrc",
+		".config/direnv/direnvrc",
+	}
+	for _, rel := range direnvCandidates {
+		absPath := filepath.Join(s.homeDir, rel)
+		if !util.FileExists(absPath) {
+			continue
+		}
+		hash, err := util.ContentHash(absPath)
+		cf := domain.ConfigFile{
+			Source:     rel,
+			BundlePath: filepath.Join("configs", "shell", filepath.Base(rel)),
+		}
+		if err == nil {
+			cf.ContentHash = hash
+		}
+		section.ConfigFiles = append(section.ConfigFiles, cf)
+	}
+
+	// 5. Prompt detection.
 	starshipPath := filepath.Join(s.homeDir, ".config", "starship.toml")
 	p10kPath := filepath.Join(s.homeDir, ".p10k.zsh")
 

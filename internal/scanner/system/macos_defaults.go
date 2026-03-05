@@ -3,6 +3,7 @@ package system
 import (
 	"context"
 	"strconv"
+	"strings"
 
 	"github.com/moinsen-dev/machinist/internal/domain"
 	"github.com/moinsen-dev/machinist/internal/scanner"
@@ -59,6 +60,18 @@ func (s *MacOSDefaultsScanner) Scan(ctx context.Context) (*scanner.ScanResult, e
 
 	// Read screenshots settings
 	section.Screenshots = s.scanScreenshots(ctx)
+
+	// Read trackpad settings
+	section.Trackpad = s.scanTrackpad(ctx)
+
+	// Read mission control settings
+	section.MissionControl = s.scanMissionControl(ctx)
+
+	// Read spotlight settings
+	section.Spotlight = s.scanSpotlight(ctx)
+
+	// Read menu bar settings
+	section.MenuBar = s.scanMenuBar(ctx)
 
 	// Read custom defaults
 	section.Defaults = s.scanCustomDefaults(ctx)
@@ -214,6 +227,106 @@ func (s *MacOSDefaultsScanner) scanScreenshots(ctx context.Context) *domain.Scre
 		return nil
 	}
 	return ss
+}
+
+func (s *MacOSDefaultsScanner) scanTrackpad(ctx context.Context) *domain.TrackpadConfig {
+	tp := &domain.TrackpadConfig{}
+	hasAny := false
+
+	if v, ok := s.readBool(ctx, "com.apple.AppleMultitouchTrackpad", "Clicking"); ok {
+		tp.TapToClick = v
+		hasAny = true
+	}
+	if val := s.readDefault(ctx, "NSGlobalDomain", "com.apple.trackpad.scaling"); val != "" {
+		if f, err := strconv.ParseFloat(val, 64); err == nil {
+			tp.TrackingSpeed = f
+			hasAny = true
+		}
+	}
+
+	if !hasAny {
+		return nil
+	}
+	return tp
+}
+
+// hotCornerName maps macOS hot corner integer values to human-readable names.
+func hotCornerName(val int) string {
+	switch val {
+	case 2:
+		return "Mission Control"
+	case 3:
+		return "Application Windows"
+	case 4:
+		return "Desktop"
+	case 5:
+		return "Start Screen Saver"
+	case 6:
+		return "Disable Screen Saver"
+	case 10:
+		return "Put Display to Sleep"
+	case 11:
+		return "Launchpad"
+	case 12:
+		return "Notification Center"
+	case 13:
+		return "Lock Screen"
+	default:
+		return ""
+	}
+}
+
+func (s *MacOSDefaultsScanner) scanMissionControl(ctx context.Context) *domain.MissionControlConfig {
+	corners := &domain.HotCorners{}
+	hasAny := false
+
+	keys := []struct {
+		key    string
+		setter func(string)
+	}{
+		{"wvous-tl-corner", func(v string) { corners.TopLeft = v }},
+		{"wvous-tr-corner", func(v string) { corners.TopRight = v }},
+		{"wvous-bl-corner", func(v string) { corners.BottomLeft = v }},
+		{"wvous-br-corner", func(v string) { corners.BottomRight = v }},
+	}
+
+	for _, k := range keys {
+		if v, ok := s.readInt(ctx, "com.apple.dock", k.key); ok {
+			name := hotCornerName(v)
+			if name != "" {
+				k.setter(name)
+				hasAny = true
+			}
+		}
+	}
+
+	if !hasAny {
+		return nil
+	}
+	return &domain.MissionControlConfig{HotCorners: corners}
+}
+
+func (s *MacOSDefaultsScanner) scanSpotlight(_ context.Context) *domain.SpotlightConfig {
+	return nil // Spotlight exclusions require complex plist parsing
+}
+
+func (s *MacOSDefaultsScanner) scanMenuBar(ctx context.Context) *domain.MenuBarConfig {
+	mb := &domain.MenuBarConfig{}
+	hasAny := false
+
+	if v, ok := s.readString(ctx, "com.apple.menuextra.clock", "DateFormat"); ok {
+		mb.ClockFormat = v
+		hasAny = true
+	}
+	if val := s.readDefault(ctx, "com.apple.menuextra.battery", "ShowPercent"); val != "" {
+		mb.ShowBatteryPercentage = strings.EqualFold(val, "YES") || val == "1"
+		hasAny = true
+	}
+
+	if !hasAny {
+		return nil
+	}
+	return mb
 }
 
 func (s *MacOSDefaultsScanner) scanCustomDefaults(ctx context.Context) []domain.MacDefault {

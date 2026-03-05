@@ -139,6 +139,307 @@ do_scheduled() {
 run_stage "Scheduled Tasks" do_scheduled
 {{end}}
 
+{{if .Git}}
+do_git_config() {
+{{template "git-config" .Git}}
+}
+run_stage "Git Configuration" do_git_config
+{{end}}
+
+{{if .SSH}}
+do_ssh() {
+{{template "ssh" .SSH}}
+}
+run_stage "SSH Keys" do_ssh
+{{end}}
+
+{{if .GPG}}
+do_gpg() {
+{{template "gpg" .GPG}}
+}
+run_stage "GPG Keys" do_gpg
+{{end}}
+
+{{if .Java}}
+do_java() {
+{{template "java" .Java}}
+}
+run_stage "Java/SDKMAN" do_java
+{{end}}
+
+{{if .Flutter}}
+do_flutter() {
+{{template "flutter" .Flutter}}
+}
+run_stage "Flutter" do_flutter
+{{end}}
+
+{{if .Go}}
+do_go() {
+{{template "go-runtime" .Go}}
+}
+run_stage "Go" do_go
+{{end}}
+
+{{if .Asdf}}
+do_asdf() {
+{{template "asdf" .Asdf}}
+}
+run_stage "asdf/mise" do_asdf
+{{end}}
+
+{{if .Deno}}
+do_deno() {
+{{template "deno" .Deno}}
+}
+run_stage "Deno" do_deno
+{{end}}
+
+{{if .Bun}}
+do_bun() {
+{{template "bun" .Bun}}
+}
+run_stage "Bun" do_bun
+{{end}}
+
+{{if .Ruby}}
+do_ruby() {
+{{template "ruby" .Ruby}}
+}
+run_stage "Ruby" do_ruby
+{{end}}
+
+{{if .GitHubCLI}}
+do_github_cli() {
+{{template "github-cli" .GitHubCLI}}
+}
+run_stage "GitHub CLI" do_github_cli
+{{end}}
+
+{{if .Terminal}}
+do_terminal() {
+{{template "terminal" .Terminal}}
+}
+run_stage "Terminal Emulator" do_terminal
+{{end}}
+
+{{if .Tmux}}
+do_tmux() {
+{{template "tmux" .Tmux}}
+}
+run_stage "tmux" do_tmux
+{{end}}
+
+{{if .Neovim}}
+do_neovim() {
+{{template "neovim" .Neovim}}
+}
+run_stage "Neovim" do_neovim
+{{end}}
+
+{{if .JetBrains}}
+do_jetbrains() {
+{{template "jetbrains" .JetBrains}}
+}
+run_stage "JetBrains IDEs" do_jetbrains
+{{end}}
+
+{{if .Xcode}}
+do_xcode() {
+{{template "xcode" .Xcode}}
+}
+run_stage "Xcode" do_xcode
+{{end}}
+
+{{if .Docker}}
+do_docker() {
+{{template "docker" .Docker}}
+}
+run_stage "Docker" do_docker
+{{end}}
+
+{{if .AWS}}
+do_aws() {
+{{template "aws" .AWS}}
+}
+run_stage "AWS CLI" do_aws
+{{end}}
+
+{{if .Kubernetes}}
+do_kubernetes() {
+{{template "kubernetes" .Kubernetes}}
+}
+run_stage "Kubernetes" do_kubernetes
+{{end}}
+
+{{if .Terraform}}
+do_terraform() {
+{{template "terraform" .Terraform}}
+}
+run_stage "Terraform" do_terraform
+{{end}}
+
+{{if .Vercel}}
+do_vercel() {
+{{template "vercel" .Vercel}}
+}
+run_stage "Vercel" do_vercel
+{{end}}
+
+{{if .GCP}}
+do_gcp() {
+{{template "gcp" .GCP}}
+}
+run_stage "Google Cloud" do_gcp
+{{end}}
+
+{{if .Azure}}
+do_azure() {
+{{template "azure" .Azure}}
+}
+run_stage "Azure" do_azure
+{{end}}
+
+{{if .Flyio}}
+do_flyio() {
+{{template "flyio" .Flyio}}
+}
+run_stage "Fly.io" do_flyio
+{{end}}
+
+{{if .Firebase}}
+do_firebase() {
+{{template "firebase" .Firebase}}
+}
+run_stage "Firebase" do_firebase
+{{end}}
+
+{{if .CloudflareWrangler}}
+do_cloudflare() {
+{{template "cloudflare" .CloudflareWrangler}}
+}
+run_stage "Cloudflare" do_cloudflare
+{{end}}
+
+{{if .Locale}}
+do_locale() {
+{{template "locale" .Locale}}
+}
+run_stage "Locale & Timezone" do_locale
+{{end}}
+
+{{if .LoginItems}}
+do_login_items() {
+{{template "login-items" .LoginItems}}
+}
+run_stage "Login Items" do_login_items
+{{end}}
+
+{{if .HostsFile}}
+do_hosts_file() {
+{{template "hosts-file" .HostsFile}}
+}
+run_stage "Hosts File" do_hosts_file
+{{end}}
+
+{{if .Network}}
+do_network() {
+{{template "network" .Network}}
+}
+run_stage "Network" do_network
+{{end}}
+
+{{if .Raycast}}
+do_raycast() {
+{{template "raycast" .Raycast}}
+}
+run_stage "Raycast" do_raycast
+{{end}}
+
+{{if .Alfred}}
+do_alfred() {
+{{template "alfred" .Alfred}}
+}
+run_stage "Alfred" do_alfred
+{{end}}
+
+{{if .Karabiner}}
+do_karabiner() {
+{{template "karabiner" .Karabiner}}
+}
+run_stage "Karabiner-Elements" do_karabiner
+{{end}}
+
+{{if .Rectangle}}
+do_rectangle() {
+{{template "rectangle" .Rectangle}}
+}
+run_stage "Rectangle" do_rectangle
+{{end}}
+
+{{if .BetterTouchTool}}
+do_bettertouchtool() {
+{{template "bettertouchtool" .BetterTouchTool}}
+}
+run_stage "BetterTouchTool" do_bettertouchtool
+{{end}}
+
+{{if .OnePassword}}
+do_onepassword() {
+{{template "onepassword" .OnePassword}}
+}
+run_stage "1Password CLI" do_onepassword
+{{end}}
+
+{{if .Browser}}
+do_browser() {
+{{template "browser" .Browser}}
+}
+run_stage "Browser" do_browser
+{{end}}
+
+{{if .AITools}}
+do_ai_tools() {
+{{template "ai-tools" .AITools}}
+}
+run_stage "AI Tools" do_ai_tools
+{{end}}
+
+{{if .APITools}}
+do_api_tools() {
+{{template "api-tools" .APITools}}
+}
+run_stage "API Tools" do_api_tools
+{{end}}
+
+{{if .XDGConfig}}
+do_xdg_config() {
+{{template "xdg-config" .XDGConfig}}
+}
+run_stage "XDG Config" do_xdg_config
+{{end}}
+
+{{if .EnvFiles}}
+do_env_files() {
+{{template "env-files" .EnvFiles}}
+}
+run_stage "Environment Files" do_env_files
+{{end}}
+
+{{if .Databases}}
+do_databases() {
+{{template "databases" .Databases}}
+}
+run_stage "Database Clients" do_databases
+{{end}}
+
+{{if .Registries}}
+do_registries() {
+{{template "registries" .Registries}}
+}
+run_stage "Package Registries" do_registries
+{{end}}
+
 END_TIME=$(date +%s)
 ELAPSED=$((END_TIME - START_TIME))
 log ""

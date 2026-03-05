@@ -60,8 +60,19 @@ type Snapshot struct {
 	Browser       *BrowserSection       `toml:"browser,omitempty"`
 	AITools       *AIToolsSection       `toml:"ai_tools,omitempty"`
 	APITools      *APIToolsSection      `toml:"api_tools,omitempty"`
-	Databases     *DatabasesSection     `toml:"databases,omitempty"`
-	Registries    *RegistriesSection    `toml:"registries,omitempty"`
+	Databases          *DatabasesSection          `toml:"databases,omitempty"`
+	Registries         *RegistriesSection         `toml:"registries,omitempty"`
+	Deno               *DenoSection               `toml:"deno,omitempty"`
+	Bun                *BunSection                `toml:"bun,omitempty"`
+	Ruby               *RubySection               `toml:"ruby,omitempty"`
+	GCP                *GCPSection                `toml:"gcp,omitempty"`
+	Azure              *AzureSection              `toml:"azure,omitempty"`
+	Flyio              *FlyioSection              `toml:"flyio,omitempty"`
+	Firebase           *FirebaseSection           `toml:"firebase,omitempty"`
+	CloudflareWrangler *CloudflareSection         `toml:"cloudflare,omitempty"`
+	Alfred             *AlfredSection             `toml:"alfred,omitempty"`
+	BetterTouchTool    *BetterTouchToolSection    `toml:"bettertouchtool,omitempty"`
+	OnePassword        *OnePasswordSection        `toml:"onepassword,omitempty"`
 }
 
 // NewSnapshot creates a new Snapshot with populated Meta fields and all sections set to nil.
@@ -99,25 +110,154 @@ func (s *Snapshot) StageCount() int {
 	if s.Rust != nil {
 		count++
 	}
+	if s.Java != nil {
+		count++
+	}
+	if s.Flutter != nil {
+		count++
+	}
+	if s.Go != nil {
+		count++
+	}
+	if s.Asdf != nil {
+		count++
+	}
+	if s.Deno != nil {
+		count++
+	}
+	if s.Bun != nil {
+		count++
+	}
+	if s.Ruby != nil {
+		count++
+	}
+	if s.Terminal != nil {
+		count++
+	}
+	if s.Tmux != nil {
+		count++
+	}
+	if s.Git != nil {
+		count++
+	}
+	if s.GitHubCLI != nil {
+		count++
+	}
 	if s.VSCode != nil {
 		count++
 	}
 	if s.Cursor != nil {
 		count++
 	}
+	if s.Neovim != nil {
+		count++
+	}
+	if s.JetBrains != nil {
+		count++
+	}
+	if s.Xcode != nil {
+		count++
+	}
+	if s.Docker != nil {
+		count++
+	}
+	if s.AWS != nil {
+		count++
+	}
+	if s.Kubernetes != nil {
+		count++
+	}
+	if s.Terraform != nil {
+		count++
+	}
+	if s.Vercel != nil {
+		count++
+	}
+	if s.GCP != nil {
+		count++
+	}
+	if s.Azure != nil {
+		count++
+	}
+	if s.Flyio != nil {
+		count++
+	}
+	if s.Firebase != nil {
+		count++
+	}
+	if s.CloudflareWrangler != nil {
+		count++
+	}
 	if s.MacOSDefaults != nil {
+		count++
+	}
+	if s.Locale != nil {
+		count++
+	}
+	if s.LoginItems != nil {
+		count++
+	}
+	if s.HostsFile != nil {
 		count++
 	}
 	if s.Apps != nil {
 		count++
 	}
-	if s.Fonts != nil {
+	if s.Raycast != nil {
+		count++
+	}
+	if s.Alfred != nil {
+		count++
+	}
+	if s.Karabiner != nil {
+		count++
+	}
+	if s.Rectangle != nil {
+		count++
+	}
+	if s.BetterTouchTool != nil {
+		count++
+	}
+	if s.OnePassword != nil {
+		count++
+	}
+	if s.SSH != nil {
+		count++
+	}
+	if s.GPG != nil {
+		count++
+	}
+	if s.XDGConfig != nil {
+		count++
+	}
+	if s.EnvFiles != nil {
 		count++
 	}
 	if s.Folders != nil {
 		count++
 	}
+	if s.Fonts != nil {
+		count++
+	}
 	if s.Crontab != nil || s.LaunchAgents != nil {
+		count++
+	}
+	if s.Network != nil {
+		count++
+	}
+	if s.Browser != nil {
+		count++
+	}
+	if s.AITools != nil {
+		count++
+	}
+	if s.APITools != nil {
+		count++
+	}
+	if s.Databases != nil {
+		count++
+	}
+	if s.Registries != nil {
 		count++
 	}
 	return count
@@ -420,4 +560,64 @@ type DatabasesSection struct {
 // RegistriesSection captures package registry configuration files.
 type RegistriesSection struct {
 	ConfigFiles []ConfigFile `toml:"config_files,omitempty"`
+}
+
+// DenoSection captures Deno version and globally installed packages.
+type DenoSection struct {
+	Version        string    `toml:"version,omitempty"`
+	GlobalPackages []Package `toml:"global_packages,omitempty"`
+}
+
+// BunSection captures Bun version and globally installed packages.
+type BunSection struct {
+	Version        string    `toml:"version,omitempty"`
+	GlobalPackages []Package `toml:"global_packages,omitempty"`
+}
+
+// RubySection captures Ruby version manager, versions, and global gems.
+type RubySection struct {
+	Manager        string    `toml:"manager,omitempty"`
+	Versions       []string  `toml:"versions,omitempty"`
+	DefaultVersion string    `toml:"default_version,omitempty"`
+	GlobalGems     []Package `toml:"global_gems,omitempty"`
+}
+
+// GCPSection captures Google Cloud CLI configuration directory.
+type GCPSection struct {
+	ConfigDir string `toml:"config_dir,omitempty"`
+}
+
+// AzureSection captures Azure CLI configuration directory.
+type AzureSection struct {
+	ConfigDir string `toml:"config_dir,omitempty"`
+}
+
+// FlyioSection captures Fly.io CLI configuration file.
+type FlyioSection struct {
+	ConfigFile string `toml:"config_file,omitempty"`
+}
+
+// FirebaseSection captures Firebase CLI configuration directory.
+type FirebaseSection struct {
+	ConfigDir string `toml:"config_dir,omitempty"`
+}
+
+// CloudflareSection captures Cloudflare Wrangler configuration directory.
+type CloudflareSection struct {
+	ConfigDir string `toml:"config_dir,omitempty"`
+}
+
+// AlfredSection captures Alfred configuration directory.
+type AlfredSection struct {
+	ConfigDir string `toml:"config_dir,omitempty"`
+}
+
+// BetterTouchToolSection captures BetterTouchTool configuration file.
+type BetterTouchToolSection struct {
+	ConfigFile string `toml:"config_file,omitempty"`
+}
+
+// OnePasswordSection captures 1Password configuration directory.
+type OnePasswordSection struct {
+	ConfigDir string `toml:"config_dir,omitempty"`
 }

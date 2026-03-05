@@ -31,6 +31,35 @@ var listCmd = &cobra.Command{
 	},
 }
 
+var listScannersCmd = &cobra.Command{
+	Use:   "scanners",
+	Short: "List available scanners",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		reg := newRegistry()
+		for _, s := range reg.List() {
+			fmt.Fprintf(cmd.OutOrStdout(), "  %-20s %s\n", s.Name(), s.Description())
+		}
+		return nil
+	},
+}
+
+var listProfilesCmd = &cobra.Command{
+	Use:   "profiles",
+	Short: "List available profiles",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		names, err := profiles.List()
+		if err != nil {
+			return err
+		}
+		for _, name := range names {
+			fmt.Fprintf(cmd.OutOrStdout(), "  %s\n", name)
+		}
+		return nil
+	},
+}
+
 func init() {
+	listCmd.AddCommand(listScannersCmd)
+	listCmd.AddCommand(listProfilesCmd)
 	rootCmd.AddCommand(listCmd)
 }

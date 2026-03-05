@@ -1,0 +1,30 @@
+{{define "go-runtime"}}
+log "Restoring Go tools..."
+{{range .GlobalPackages}}
+go install "{{.Name}}@latest" || true
+{{end}}
+{{end}}
+
+{{define "java"}}
+log "Restoring Java/SDKMAN..."
+{{end}}
+
+{{define "flutter"}}
+log "Restoring Flutter..."
+{{end}}
+
+{{define "deno"}}
+log "Restoring Deno..."
+{{end}}
+
+{{define "bun"}}
+log "Restoring Bun..."
+{{end}}
+
+{{define "ruby"}}
+log "Restoring Ruby..."
+{{end}}
+
+{{define "asdf"}}
+log "Restoring asdf/mise..."
+{{end}}

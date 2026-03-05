@@ -13,6 +13,7 @@ import (
 var (
 	snapshotOutput      string
 	snapshotInteractive bool
+	snapshotDryRun      bool
 )
 
 var snapshotCmd = &cobra.Command{
@@ -47,6 +48,15 @@ var snapshotCmd = &cobra.Command{
 			fmt.Fprintf(cmd.ErrOrStderr(), "warning: %v\n", e)
 		}
 		fmt.Fprintln(cmd.OutOrStdout())
+
+		if snapshotDryRun {
+			data, err := domain.MarshalManifest(snap)
+			if err != nil {
+				return fmt.Errorf("marshal: %w", err)
+			}
+			cmd.Print(string(data))
+			return nil
+		}
 
 		if err := domain.WriteManifest(snap, snapshotOutput); err != nil {
 			return fmt.Errorf("write manifest: %w", err)
@@ -99,5 +109,6 @@ func sectionNames(snap *domain.Snapshot) []string {
 func init() {
 	snapshotCmd.Flags().StringVarP(&snapshotOutput, "output", "o", "machinist-snapshot.toml", "Output file path")
 	snapshotCmd.Flags().BoolVarP(&snapshotInteractive, "interactive", "i", false, "Interactively select which scanners to run")
+	snapshotCmd.Flags().BoolVar(&snapshotDryRun, "dry-run", false, "Scan and print manifest to stdout without writing a file")
 	rootCmd.AddCommand(snapshotCmd)
 }

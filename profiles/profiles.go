@@ -92,6 +92,15 @@ func Merge(base, override *domain.Snapshot) *domain.Snapshot {
 	if override.Asdf != nil {
 		merged.Asdf = override.Asdf
 	}
+	if override.Deno != nil {
+		merged.Deno = override.Deno
+	}
+	if override.Bun != nil {
+		merged.Bun = override.Bun
+	}
+	if override.Ruby != nil {
+		merged.Ruby = override.Ruby
+	}
 	if override.Shell != nil {
 		merged.Shell = override.Shell
 	}
@@ -140,6 +149,21 @@ func Merge(base, override *domain.Snapshot) *domain.Snapshot {
 	if override.Vercel != nil {
 		merged.Vercel = override.Vercel
 	}
+	if override.GCP != nil {
+		merged.GCP = override.GCP
+	}
+	if override.Azure != nil {
+		merged.Azure = override.Azure
+	}
+	if override.Flyio != nil {
+		merged.Flyio = override.Flyio
+	}
+	if override.Firebase != nil {
+		merged.Firebase = override.Firebase
+	}
+	if override.CloudflareWrangler != nil {
+		merged.CloudflareWrangler = override.CloudflareWrangler
+	}
 	if override.MacOSDefaults != nil {
 		merged.MacOSDefaults = override.MacOSDefaults
 	}
@@ -158,11 +182,20 @@ func Merge(base, override *domain.Snapshot) *domain.Snapshot {
 	if override.Raycast != nil {
 		merged.Raycast = override.Raycast
 	}
+	if override.Alfred != nil {
+		merged.Alfred = override.Alfred
+	}
 	if override.Karabiner != nil {
 		merged.Karabiner = override.Karabiner
 	}
 	if override.Rectangle != nil {
 		merged.Rectangle = override.Rectangle
+	}
+	if override.BetterTouchTool != nil {
+		merged.BetterTouchTool = override.BetterTouchTool
+	}
+	if override.OnePassword != nil {
+		merged.OnePassword = override.OnePassword
 	}
 	if override.SSH != nil {
 		merged.SSH = override.SSH

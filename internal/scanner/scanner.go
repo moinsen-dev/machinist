@@ -19,22 +19,63 @@ type ScanResult struct {
 	Err         error
 
 	// Each scanner populates one of these (the rest remain nil):
-	Homebrew      *domain.HomebrewSection
-	Shell         *domain.ShellSection
-	Node          *domain.NodeSection
-	Python        *domain.PythonSection
-	Rust          *domain.RustSection
-	Git           *domain.GitSection
-	GitRepos      *domain.GitReposSection
-	VSCode        *domain.VSCodeSection
-	Cursor        *domain.CursorSection
-	Docker        *domain.DockerSection
-	MacOSDefaults *domain.MacOSDefaultsSection
-	Folders       *domain.FoldersSection
-	Fonts         *domain.FontsSection
-	Crontab       *domain.CrontabSection
-	LaunchAgents  *domain.LaunchAgentsSection
-	Apps          *domain.AppsSection
+	Homebrew           *domain.HomebrewSection
+	Shell              *domain.ShellSection
+	Node               *domain.NodeSection
+	Python             *domain.PythonSection
+	Rust               *domain.RustSection
+	Git                *domain.GitSection
+	GitRepos           *domain.GitReposSection
+	VSCode             *domain.VSCodeSection
+	Cursor             *domain.CursorSection
+	Docker             *domain.DockerSection
+	MacOSDefaults      *domain.MacOSDefaultsSection
+	Folders            *domain.FoldersSection
+	Fonts              *domain.FontsSection
+	Crontab            *domain.CrontabSection
+	LaunchAgents       *domain.LaunchAgentsSection
+	Apps               *domain.AppsSection
+	Java               *domain.JavaSection
+	Flutter            *domain.FlutterSection
+	GoLang             *domain.GoSection
+	Asdf               *domain.AsdfSection
+	Deno               *domain.DenoSection
+	Bun                *domain.BunSection
+	Ruby               *domain.RubySection
+	Terminal           *domain.TerminalSection
+	Tmux               *domain.TmuxSection
+	GitHubCLI          *domain.GitHubCLISection
+	Neovim             *domain.NeovimSection
+	JetBrains          *domain.JetBrainsSection
+	Xcode              *domain.XcodeSection
+	AWS                *domain.AWSSection
+	Kubernetes         *domain.KubernetesSection
+	Terraform          *domain.TerraformSection
+	Vercel             *domain.VercelSection
+	GCP                *domain.GCPSection
+	Azure              *domain.AzureSection
+	Flyio              *domain.FlyioSection
+	Firebase           *domain.FirebaseSection
+	CloudflareWrangler *domain.CloudflareSection
+	Locale             *domain.LocaleSection
+	LoginItems         *domain.LoginItemsSection
+	HostsFile          *domain.HostsFileSection
+	Raycast            *domain.RaycastSection
+	Alfred             *domain.AlfredSection
+	Karabiner          *domain.KarabinerSection
+	Rectangle          *domain.RectangleSection
+	BetterTouchTool    *domain.BetterTouchToolSection
+	OnePassword        *domain.OnePasswordSection
+	SSH                *domain.SSHSection
+	GPG                *domain.GPGSection
+	XDGConfig          *domain.XDGConfigSection
+	EnvFiles           *domain.EnvFilesSection
+	Network            *domain.NetworkSection
+	Browser            *domain.BrowserSection
+	AITools            *domain.AIToolsSection
+	APITools           *domain.APIToolsSection
+	Databases          *domain.DatabasesSection
+	Registries         *domain.RegistriesSection
 }
 
 // Scanner is the interface that all scanners must implement.
@@ -136,7 +177,7 @@ func (r *Registry) ScanAllWithProgress(ctx context.Context, onProgress ProgressF
 			}
 			continue
 		}
-		applyResult(snap, result)
+		ApplyResult(snap, result)
 
 		if onProgress != nil {
 			onProgress(ProgressEvent{Name: s.Name(), Index: i, Total: total, Done: true, Duration: elapsed})
@@ -160,8 +201,8 @@ func (r *Registry) ScanOne(ctx context.Context, name string) (*ScanResult, error
 	return result, nil
 }
 
-// applyResult maps a ScanResult's populated fields onto the Snapshot.
-func applyResult(snap *domain.Snapshot, result *ScanResult) {
+// ApplyResult maps a ScanResult's populated fields onto the Snapshot.
+func ApplyResult(snap *domain.Snapshot, result *ScanResult) {
 	if result.Homebrew != nil {
 		snap.Homebrew = result.Homebrew
 	}
@@ -209,5 +250,128 @@ func applyResult(snap *domain.Snapshot, result *ScanResult) {
 	}
 	if result.Apps != nil {
 		snap.Apps = result.Apps
+	}
+	if result.Java != nil {
+		snap.Java = result.Java
+	}
+	if result.Flutter != nil {
+		snap.Flutter = result.Flutter
+	}
+	if result.GoLang != nil {
+		snap.Go = result.GoLang
+	}
+	if result.Asdf != nil {
+		snap.Asdf = result.Asdf
+	}
+	if result.Deno != nil {
+		snap.Deno = result.Deno
+	}
+	if result.Bun != nil {
+		snap.Bun = result.Bun
+	}
+	if result.Ruby != nil {
+		snap.Ruby = result.Ruby
+	}
+	if result.Terminal != nil {
+		snap.Terminal = result.Terminal
+	}
+	if result.Tmux != nil {
+		snap.Tmux = result.Tmux
+	}
+	if result.GitHubCLI != nil {
+		snap.GitHubCLI = result.GitHubCLI
+	}
+	if result.Neovim != nil {
+		snap.Neovim = result.Neovim
+	}
+	if result.JetBrains != nil {
+		snap.JetBrains = result.JetBrains
+	}
+	if result.Xcode != nil {
+		snap.Xcode = result.Xcode
+	}
+	if result.AWS != nil {
+		snap.AWS = result.AWS
+	}
+	if result.Kubernetes != nil {
+		snap.Kubernetes = result.Kubernetes
+	}
+	if result.Terraform != nil {
+		snap.Terraform = result.Terraform
+	}
+	if result.Vercel != nil {
+		snap.Vercel = result.Vercel
+	}
+	if result.GCP != nil {
+		snap.GCP = result.GCP
+	}
+	if result.Azure != nil {
+		snap.Azure = result.Azure
+	}
+	if result.Flyio != nil {
+		snap.Flyio = result.Flyio
+	}
+	if result.Firebase != nil {
+		snap.Firebase = result.Firebase
+	}
+	if result.CloudflareWrangler != nil {
+		snap.CloudflareWrangler = result.CloudflareWrangler
+	}
+	if result.Locale != nil {
+		snap.Locale = result.Locale
+	}
+	if result.LoginItems != nil {
+		snap.LoginItems = result.LoginItems
+	}
+	if result.HostsFile != nil {
+		snap.HostsFile = result.HostsFile
+	}
+	if result.Raycast != nil {
+		snap.Raycast = result.Raycast
+	}
+	if result.Alfred != nil {
+		snap.Alfred = result.Alfred
+	}
+	if result.Karabiner != nil {
+		snap.Karabiner = result.Karabiner
+	}
+	if result.Rectangle != nil {
+		snap.Rectangle = result.Rectangle
+	}
+	if result.BetterTouchTool != nil {
+		snap.BetterTouchTool = result.BetterTouchTool
+	}
+	if result.OnePassword != nil {
+		snap.OnePassword = result.OnePassword
+	}
+	if result.SSH != nil {
+		snap.SSH = result.SSH
+	}
+	if result.GPG != nil {
+		snap.GPG = result.GPG
+	}
+	if result.XDGConfig != nil {
+		snap.XDGConfig = result.XDGConfig
+	}
+	if result.EnvFiles != nil {
+		snap.EnvFiles = result.EnvFiles
+	}
+	if result.Network != nil {
+		snap.Network = result.Network
+	}
+	if result.Browser != nil {
+		snap.Browser = result.Browser
+	}
+	if result.AITools != nil {
+		snap.AITools = result.AITools
+	}
+	if result.APITools != nil {
+		snap.APITools = result.APITools
+	}
+	if result.Databases != nil {
+		snap.Databases = result.Databases
+	}
+	if result.Registries != nil {
+		snap.Registries = result.Registries
 	}
 }

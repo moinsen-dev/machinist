@@ -20,11 +20,14 @@ var (
 )
 
 var restoreCmd = &cobra.Command{
-	Use:   "restore <manifest.toml>",
+	Use:   "restore [manifest.toml]",
 	Short: "Restore environment from manifest",
-	Args:  cobra.ExactArgs(1),
+	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		manifestPath := args[0]
+		manifestPath := "manifest.toml"
+		if len(args) > 0 {
+			manifestPath = args[0]
+		}
 
 		if restoreSkip != "" && restoreOnly != "" {
 			return fmt.Errorf("--skip and --only are mutually exclusive; use one or the other")

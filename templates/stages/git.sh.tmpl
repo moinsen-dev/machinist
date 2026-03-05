@@ -1,3 +1,7 @@
+{{define "git-config"}}
+log "Restoring git configuration..."
+{{end}}
+
 {{define "git-repos"}}
 {{range .Repositories}}
 if [ ! -d "{{.Path}}" ]; then

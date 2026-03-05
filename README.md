@@ -49,7 +49,7 @@ machinist is **not a backup tool** — it's a setup automator. The DMG contains 
 ```bash
 # Snapshot — capture your existing system
 machinist snapshot
-machinist snapshot --output ~/Desktop/machinist.dmg
+machinist snapshot --output ~/Desktop/machinist-snapshot.toml
 machinist snapshot --interactive
 machinist snapshot --dry-run
 
@@ -58,24 +58,32 @@ machinist scan homebrew
 machinist scan shell
 machinist scan git-repos --search-paths ~/Code,~/Projects
 
-# Compose — build a setup from a profile (AI or manual)
-machinist compose --from profile://flutter-ios
-machinist compose --from profile://fullstack-js --add docker,postgres
-machinist compose --from manifest.toml --output setup.dmg
+# Compose — build a setup from a profile or existing manifest
+machinist compose flutter-ios
+machinist compose fullstack-js --add docker,postgres
+machinist compose flutter-ios --output setup.toml
+machinist compose --from-file manifest.toml --output setup.toml
 
-# Restore — on a new Mac, from mounted DMG
+# DMG — bundle manifest into a self-contained DMG
+machinist dmg manifest.toml
+machinist dmg manifest.toml --output ~/Desktop/setup.dmg
+
+# Restore — on a new Mac, from mounted DMG or local manifest
 machinist restore
+machinist restore manifest.toml
 machinist restore --skip homebrew,fonts
 machinist restore --dry-run
 machinist restore --only shell,git,ssh
+machinist restore --yes
 
 # MCP Server — let AI tools drive machinist
 machinist serve                           # stdio (Claude Code, Cursor)
 machinist serve --port 3333               # SSE (Claude Desktop, web clients)
 
 # Info
-machinist list-scanners
-machinist list-profiles
+machinist list
+machinist list scanners
+machinist list profiles
 machinist version
 ```
 
@@ -147,7 +155,7 @@ Docker (config, frequently used images), Colima, OrbStack, Podman
 AWS CLI, GCP, Azure, Kubernetes, Terraform, Vercel, Fly.io, Firebase, Cloudflare
 
 ### macOS System
-Dock, Finder, Keyboard, Trackpad, Mission Control, Accessibility, Login Items, Hosts file, Spotlight, Screenshots, Locale/Timezone, Display, Menu Bar, Computer Name
+Dock, Finder, Keyboard, Trackpad, Mission Control, Accessibility, Login Items, Hosts file, Spotlight, Screenshots, Locale/Timezone, Menu Bar, Computer Name
 
 ### Network & VPN
 Wi-Fi networks, VPN configurations, DNS settings, Proxy settings, Tailscale
@@ -169,7 +177,7 @@ SSH keys (encrypted with [age](https://github.com/FiloSottile/age)), GPG keys (e
 
 ## Restore Order
 
-The restore script executes 31 stages in dependency order — SSH keys are decrypted before git repos are cloned, Homebrew is installed before language runtimes, etc. Each stage is:
+The restore script executes 50+ stages in dependency order — SSH keys are decrypted before git repos are cloned, Homebrew is installed before language runtimes, etc. Each stage is:
 
 - **Skippable** (`--skip stage-name`)
 - **Idempotent** (checks if already installed/present)
@@ -212,7 +220,7 @@ go build ./cmd/machinist
 # Run
 go run ./cmd/machinist snapshot --dry-run
 go run ./cmd/machinist scan homebrew
-go run ./cmd/machinist list-scanners
+go run ./cmd/machinist list scanners
 
 # Test
 go test ./...

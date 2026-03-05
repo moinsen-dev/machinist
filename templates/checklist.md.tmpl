@@ -3,26 +3,41 @@
 Restored from: **{{.Meta.SourceHostname}}** ({{.Meta.SourceOSVersion}}, {{.Meta.SourceArch}})
 Generated: {{.Meta.CreatedAt}}
 
-The following items could not be automated and need manual attention:
+The following items need manual attention:
 
 ## macOS Permissions (TCC)
 - [ ] Grant Terminal/iTerm2 Full Disk Access (System Preferences -> Privacy & Security)
-- [ ] Grant accessibility permissions to installed apps (Raycast, Rectangle, etc.)
+{{if .Raycast}}- [ ] Grant Raycast accessibility permissions{{end}}
+{{if .Rectangle}}- [ ] Grant Rectangle accessibility permissions{{end}}
+{{if .Karabiner}}- [ ] Grant Karabiner-Elements input monitoring permissions{{end}}
+{{if .BetterTouchTool}}- [ ] Grant BetterTouchTool accessibility permissions{{end}}
 
+{{if .Browser}}
 ## Browser
-- [ ] Sign in to browsers and sync extensions
+- [ ] Sign in to browser and sync extensions
 - [ ] Import bookmarks if needed
+{{end}}
 
 ## Accounts & Credentials
 - [ ] Sign in to Mac App Store
-- [ ] Sign in to Xcode with Apple ID
-- [ ] Configure cloud storage (iCloud, Dropbox, etc.)
-- [ ] Set up VPN connections
-- [ ] Import Bluetooth device pairings
+{{if .Xcode}}- [ ] Sign in to Xcode with Apple ID{{end}}
+{{if .Docker}}- [ ] Sign in to Docker Desktop{{end}}
+{{if .GCP}}- [ ] Run `gcloud auth login`{{end}}
+{{if .Azure}}- [ ] Run `az login`{{end}}
+{{if .OnePassword}}- [ ] Run `op signin`{{end}}
+{{if .JetBrains}}- [ ] Sign in to JetBrains Account for settings sync{{end}}
 
+{{if or .SSH .GPG}}
 ## Git & SSH
-- [ ] Test SSH key authentication: `ssh -T git@github.com`
-- [ ] Verify git signing works: `git log --show-signature`
+{{if .SSH}}- [ ] Test SSH key authentication: `ssh -T git@github.com`{{end}}
+{{if .GPG}}- [ ] Verify git signing works: `git log --show-signature`{{end}}
+{{end}}
+
+{{if .Network}}
+## Network
+- [ ] Set up VPN connections manually
+- [ ] Verify DNS settings
+{{end}}
 
 ## Verification
 - [ ] Run `machinist snapshot --dry-run` on the new machine to compare

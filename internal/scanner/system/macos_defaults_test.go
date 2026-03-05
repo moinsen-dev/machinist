@@ -224,6 +224,192 @@ func TestMacOSDefaultsScanner_Scan_CustomDefaults(t *testing.T) {
 	assert.Equal(t, "bool", result.MacOSDefaults.Defaults[1].ValueType)
 }
 
+func TestMacOSDefaultsScanner_Scan_TrackpadSettings(t *testing.T) {
+	mock := &util.MockCommandRunner{
+		Responses: map[string]util.MockResponse{
+			"defaults read com.apple.AppleMultitouchTrackpad Clicking": {Output: "1"},
+			"defaults read NSGlobalDomain com.apple.trackpad.scaling":  {Output: "0.875"},
+			// All other subsections — errors
+			"defaults read com.apple.dock autohide":                 {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.dock tilesize":                 {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.dock orientation":              {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.dock magnification":            {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.dock show-recents":             {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.finder ShowPathbar":            {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.finder ShowStatusBar":          {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.finder AppleShowAllFiles":      {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.finder FXPreferredViewStyle":   {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.finder FXDefaultSearchScope":   {Err: fmt.Errorf("not set")},
+			"defaults read NSGlobalDomain KeyRepeat":                {Err: fmt.Errorf("not set")},
+			"defaults read NSGlobalDomain InitialKeyRepeat":         {Err: fmt.Errorf("not set")},
+			"defaults read NSGlobalDomain ApplePressAndHoldEnabled": {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.screencapture location":        {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.screencapture type":            {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.screencapture disable-shadow":  {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.menuextra.clock DateFormat":    {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.menuextra.battery ShowPercent": {Err: fmt.Errorf("not set")},
+		},
+	}
+
+	s := NewMacOSDefaultsScanner(mock)
+	result, err := s.Scan(context.Background())
+
+	require.NoError(t, err)
+	require.NotNil(t, result.MacOSDefaults)
+	require.NotNil(t, result.MacOSDefaults.Trackpad)
+
+	tp := result.MacOSDefaults.Trackpad
+	assert.True(t, tp.TapToClick)
+	assert.InDelta(t, 0.875, tp.TrackingSpeed, 0.001)
+}
+
+func TestMacOSDefaultsScanner_Scan_MissionControlSettings(t *testing.T) {
+	mock := &util.MockCommandRunner{
+		Responses: map[string]util.MockResponse{
+			"defaults read com.apple.dock wvous-tl-corner": {Output: "2"},
+			"defaults read com.apple.dock wvous-tr-corner": {Output: "12"},
+			"defaults read com.apple.dock wvous-bl-corner": {Output: "4"},
+			"defaults read com.apple.dock wvous-br-corner": {Output: "13"},
+			// Standard dock reads — errors
+			"defaults read com.apple.dock autohide":     {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.dock tilesize":     {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.dock orientation":  {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.dock magnification": {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.dock show-recents": {Err: fmt.Errorf("not set")},
+			// Others — errors
+			"defaults read com.apple.finder ShowPathbar":                      {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.finder ShowStatusBar":                    {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.finder AppleShowAllFiles":                {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.finder FXPreferredViewStyle":             {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.finder FXDefaultSearchScope":             {Err: fmt.Errorf("not set")},
+			"defaults read NSGlobalDomain KeyRepeat":                          {Err: fmt.Errorf("not set")},
+			"defaults read NSGlobalDomain InitialKeyRepeat":                   {Err: fmt.Errorf("not set")},
+			"defaults read NSGlobalDomain ApplePressAndHoldEnabled":           {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.screencapture location":                  {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.screencapture type":                      {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.screencapture disable-shadow":            {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.AppleMultitouchTrackpad Clicking":        {Err: fmt.Errorf("not set")},
+			"defaults read NSGlobalDomain com.apple.trackpad.scaling":         {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.menuextra.clock DateFormat":              {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.menuextra.battery ShowPercent":           {Err: fmt.Errorf("not set")},
+		},
+	}
+
+	s := NewMacOSDefaultsScanner(mock)
+	result, err := s.Scan(context.Background())
+
+	require.NoError(t, err)
+	require.NotNil(t, result.MacOSDefaults)
+	require.NotNil(t, result.MacOSDefaults.MissionControl)
+	require.NotNil(t, result.MacOSDefaults.MissionControl.HotCorners)
+
+	hc := result.MacOSDefaults.MissionControl.HotCorners
+	assert.Equal(t, "Mission Control", hc.TopLeft)
+	assert.Equal(t, "Notification Center", hc.TopRight)
+	assert.Equal(t, "Desktop", hc.BottomLeft)
+	assert.Equal(t, "Lock Screen", hc.BottomRight)
+}
+
+func TestMacOSDefaultsScanner_Scan_MenuBarSettings(t *testing.T) {
+	mock := &util.MockCommandRunner{
+		Responses: map[string]util.MockResponse{
+			"defaults read com.apple.menuextra.clock DateFormat":    {Output: "EEE MMM d  h:mm a"},
+			"defaults read com.apple.menuextra.battery ShowPercent": {Output: "YES"},
+			// All other subsections — errors
+			"defaults read com.apple.dock autohide":                        {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.dock tilesize":                        {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.dock orientation":                     {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.dock magnification":                   {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.dock show-recents":                    {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.finder ShowPathbar":                   {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.finder ShowStatusBar":                 {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.finder AppleShowAllFiles":             {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.finder FXPreferredViewStyle":          {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.finder FXDefaultSearchScope":          {Err: fmt.Errorf("not set")},
+			"defaults read NSGlobalDomain KeyRepeat":                       {Err: fmt.Errorf("not set")},
+			"defaults read NSGlobalDomain InitialKeyRepeat":                {Err: fmt.Errorf("not set")},
+			"defaults read NSGlobalDomain ApplePressAndHoldEnabled":        {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.screencapture location":               {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.screencapture type":                   {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.screencapture disable-shadow":         {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.AppleMultitouchTrackpad Clicking":     {Err: fmt.Errorf("not set")},
+			"defaults read NSGlobalDomain com.apple.trackpad.scaling":      {Err: fmt.Errorf("not set")},
+		},
+	}
+
+	s := NewMacOSDefaultsScanner(mock)
+	result, err := s.Scan(context.Background())
+
+	require.NoError(t, err)
+	require.NotNil(t, result.MacOSDefaults)
+	require.NotNil(t, result.MacOSDefaults.MenuBar)
+
+	mb := result.MacOSDefaults.MenuBar
+	assert.Equal(t, "EEE MMM d  h:mm a", mb.ClockFormat)
+	assert.True(t, mb.ShowBatteryPercentage)
+}
+
+func TestMacOSDefaultsScanner_Scan_MenuBarBatteryNumeric(t *testing.T) {
+	mock := &util.MockCommandRunner{
+		Responses: map[string]util.MockResponse{
+			"defaults read com.apple.menuextra.clock DateFormat":    {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.menuextra.battery ShowPercent": {Output: "1"},
+			// All other subsections — errors
+			"defaults read com.apple.dock autohide":                        {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.dock tilesize":                        {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.dock orientation":                     {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.dock magnification":                   {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.dock show-recents":                    {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.finder ShowPathbar":                   {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.finder ShowStatusBar":                 {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.finder AppleShowAllFiles":             {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.finder FXPreferredViewStyle":          {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.finder FXDefaultSearchScope":          {Err: fmt.Errorf("not set")},
+			"defaults read NSGlobalDomain KeyRepeat":                       {Err: fmt.Errorf("not set")},
+			"defaults read NSGlobalDomain InitialKeyRepeat":                {Err: fmt.Errorf("not set")},
+			"defaults read NSGlobalDomain ApplePressAndHoldEnabled":        {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.screencapture location":               {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.screencapture type":                   {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.screencapture disable-shadow":         {Err: fmt.Errorf("not set")},
+			"defaults read com.apple.AppleMultitouchTrackpad Clicking":     {Err: fmt.Errorf("not set")},
+			"defaults read NSGlobalDomain com.apple.trackpad.scaling":      {Err: fmt.Errorf("not set")},
+		},
+	}
+
+	s := NewMacOSDefaultsScanner(mock)
+	result, err := s.Scan(context.Background())
+
+	require.NoError(t, err)
+	require.NotNil(t, result.MacOSDefaults)
+	require.NotNil(t, result.MacOSDefaults.MenuBar)
+	assert.True(t, result.MacOSDefaults.MenuBar.ShowBatteryPercentage)
+}
+
+func TestHotCornerName(t *testing.T) {
+	tests := []struct {
+		val      int
+		expected string
+	}{
+		{2, "Mission Control"},
+		{3, "Application Windows"},
+		{4, "Desktop"},
+		{5, "Start Screen Saver"},
+		{6, "Disable Screen Saver"},
+		{10, "Put Display to Sleep"},
+		{11, "Launchpad"},
+		{12, "Notification Center"},
+		{13, "Lock Screen"},
+		{0, ""},
+		{99, ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(fmt.Sprintf("val_%d", tt.val), func(t *testing.T) {
+			assert.Equal(t, tt.expected, hotCornerName(tt.val))
+		})
+	}
+}
+
 func TestMacOSDefaultsScanner_Scan_DefaultsReadError(t *testing.T) {
 	mock := &util.MockCommandRunner{
 		Responses: map[string]util.MockResponse{
