@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"os"
 	"runtime"
+	"strings"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -51,10 +53,24 @@ var dmgCmd = &cobra.Command{
 			fmt.Fprintf(cmd.ErrOrStderr(), "warning: %v\n", e)
 		}
 
+		// Prompt for age encryption passphrase if snapshot has encrypted sections
+		var passphrase string
+		if hasEncryptedSections(snap) {
+			fmt.Fprintf(cmd.OutOrStdout(), "\nSensitive files detected (SSH keys, GPG, .env). These will be encrypted in the bundle.")
+			fmt.Fprintf(cmd.OutOrStdout(), "\nEnter encryption passphrase (empty to skip encryption): ")
+			reader := bufio.NewReader(os.Stdin)
+			line, _ := reader.ReadString('\n')
+			passphrase = strings.TrimSpace(line)
+			if passphrase == "" {
+				fmt.Fprintf(cmd.OutOrStdout(), "Skipping age encryption of sensitive files.\n")
+			}
+		}
+
 		fmt.Fprintf(cmd.OutOrStdout(), "\nBuilding DMG bundle...")
 		runner := &util.RealCommandRunner{}
 		opts := bundler.BundleOptions{
 			Password:   dmgPassword,
+			Passphrase: passphrase,
 			VolumeName: "Machinist Restore",
 		}
 		if err := bundler.Bundle(ctx, runner, snap, dmgOutput, opts); err != nil {
@@ -113,6 +129,22 @@ func runInteractiveScan(cmd *cobra.Command, reg *scanner.Registry, ctx context.C
 
 	snap.Meta.ScanDurationSecs = time.Since(start).Seconds()
 	return snap, errs, nil
+}
+
+// hasEncryptedSections returns true if the snapshot contains sections marked as encrypted
+// (SSH, GPG, or EnvFiles with Encrypted: true), indicating sensitive files that should
+// be age-encrypted in the bundle.
+func hasEncryptedSections(snap *domain.Snapshot) bool {
+	if snap.SSH != nil && snap.SSH.Encrypted {
+		return true
+	}
+	if snap.GPG != nil && snap.GPG.Encrypted {
+		return true
+	}
+	if snap.EnvFiles != nil && snap.EnvFiles.Encrypted {
+		return true
+	}
+	return false
 }
 
 func init() {

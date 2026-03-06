@@ -1,7 +1,37 @@
 {{define "terminal"}}
 log "Restoring terminal emulator config..."
+{{if .App}}
+log "Terminal emulator: {{.App}}"
+{{end}}
+
+{{range .ConfigFiles}}
+if [ -f "{{.BundlePath}}" ]; then
+    log "Restoring {{.Source}}"
+    mkdir -p "$(dirname "$HOME/{{.Source}}")"
+    cp "{{.BundlePath}}" "$HOME/{{.Source}}"
+fi
+{{end}}
 {{end}}
 
 {{define "tmux"}}
 log "Restoring tmux config..."
+{{range .ConfigFiles}}
+if [ -f "{{.BundlePath}}" ]; then
+    log "Restoring {{.Source}}"
+    mkdir -p "$(dirname "$HOME/{{.Source}}")"
+    cp "{{.BundlePath}}" "$HOME/{{.Source}}"
+fi
+{{end}}
+
+{{if .TPMPlugins}}
+# Install TPM (Tmux Plugin Manager) if not present
+if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
+    log "Installing TPM (Tmux Plugin Manager)..."
+    git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm" || true
+fi
+
+# Install TPM plugins
+log "Installing tmux plugins via TPM..."
+"$HOME/.tmux/plugins/tpm/bin/install_plugins" || true
+{{end}}
 {{end}}

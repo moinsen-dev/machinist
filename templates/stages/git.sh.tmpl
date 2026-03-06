@@ -1,5 +1,49 @@
 {{define "git-config"}}
 log "Restoring git configuration..."
+{{range .ConfigFiles}}
+if [ -f "{{.BundlePath}}" ]; then
+    log "Restoring {{.Source}}"
+    mkdir -p "$(dirname "$HOME/{{.Source}}")"
+    cp "{{.BundlePath}}" "$HOME/{{.Source}}"
+fi
+{{end}}
+
+{{if .SigningMethod}}
+log "Setting git signing method to {{.SigningMethod}}"
+git config --global gpg.format "{{.SigningMethod}}" || true
+{{end}}
+
+{{if .CredentialHelper}}
+log "Setting git credential helper"
+git config --global credential.helper "{{.CredentialHelper}}" || true
+{{end}}
+
+{{if .TemplateDir}}
+log "Setting git template directory"
+git config --global init.templateDir "{{.TemplateDir}}" || true
+{{end}}
+{{end}}
+
+{{define "github-cli"}}
+log "Restoring GitHub CLI..."
+if ! command -v gh &>/dev/null; then
+    log "Warning: GitHub CLI is not installed — install via 'brew install gh'"
+else
+    {{if .ConfigDir}}
+    if [ -d "{{.ConfigDir}}" ]; then
+        log "Restoring GitHub CLI config directory"
+        mkdir -p "$HOME/.config/gh"
+        cp -R "{{.ConfigDir}}/" "$HOME/.config/gh/"
+    fi
+    {{end}}
+
+    {{range .Extensions}}
+    log "Installing gh extension {{.}}"
+    gh extension install "{{.}}" || true
+    {{end}}
+
+    log "CHECKLIST: Run 'gh auth login' to authenticate"
+fi
 {{end}}
 
 {{define "git-repos"}}

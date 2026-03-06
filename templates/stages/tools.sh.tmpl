@@ -1,51 +1,190 @@
 {{define "raycast"}}
 log "Restoring Raycast..."
+{{if .ExportFile}}
+log "CHECKLIST: Raycast configuration export available"
+log "  1. Open Raycast"
+log "  2. Go to Settings > Advanced > Import"
+log "  3. Import from: {{.ExportFile}}"
+{{end}}
 {{end}}
 
 {{define "alfred"}}
 log "Restoring Alfred..."
+{{if .ConfigDir}}
+log "CHECKLIST: Alfred preferences sync"
+log "  1. Open Alfred Preferences"
+log "  2. Go to Advanced > Set preferences folder"
+log "  3. Point to your synced preferences location (Dropbox/iCloud)"
+log "  Config dir: {{.ConfigDir}}"
+{{end}}
 {{end}}
 
 {{define "karabiner"}}
 log "Restoring Karabiner-Elements..."
+{{if .ConfigDir}}
+if [ -d "{{.ConfigDir}}" ]; then
+    log "Restoring Karabiner config directory"
+    mkdir -p "$HOME/.config/karabiner"
+    cp -R "{{.ConfigDir}}/" "$HOME/.config/karabiner/"
+fi
+{{end}}
 {{end}}
 
 {{define "rectangle"}}
 log "Restoring Rectangle..."
+{{if .ConfigFile}}
+if [ -f "{{.ConfigFile}}" ]; then
+    log "Restoring Rectangle preferences"
+    cp "{{.ConfigFile}}" "$HOME/Library/Preferences/com.knollsoft.Rectangle.plist"
+    defaults read com.knollsoft.Rectangle &>/dev/null || true
+fi
+{{end}}
 {{end}}
 
 {{define "bettertouchtool"}}
 log "Restoring BetterTouchTool..."
+{{if .ConfigFile}}
+log "CHECKLIST: BetterTouchTool configuration"
+log "  1. Open BetterTouchTool"
+log "  2. Go to Preferences > Manage Presets"
+log "  3. Import from: {{.ConfigFile}}"
+{{end}}
 {{end}}
 
 {{define "onepassword"}}
 log "Restoring 1Password CLI..."
+# Install 1Password CLI if not present
+if ! command -v op &>/dev/null; then
+    log "Installing 1Password CLI..."
+    brew install --cask 1password-cli || true
+fi
+
+{{if .ConfigDir}}
+if [ -d "{{.ConfigDir}}" ]; then
+    log "Restoring 1Password CLI config directory"
+    mkdir -p "$HOME/.config/op"
+    cp -R "{{.ConfigDir}}/" "$HOME/.config/op/"
+fi
+{{end}}
+log "CHECKLIST: Run 'op signin' to authenticate with 1Password"
 {{end}}
 
 {{define "browser"}}
 log "Restoring browser settings..."
+{{if .Default}}
+log "Default browser was: {{.Default}}"
+log "CHECKLIST: Set default browser in System Settings > Desktop & Dock > Default web browser"
+{{end}}
+
+{{if .ExtensionsChecklist}}
+log "CHECKLIST: Browser extensions to install:"
+log "{{.ExtensionsChecklist}}"
+{{end}}
 {{end}}
 
 {{define "ai-tools"}}
 log "Restoring AI tools..."
+{{if .ClaudeCodeConfig}}
+if [ -f "{{.ClaudeCodeConfig}}" ]; then
+    log "Restoring Claude Code config"
+    mkdir -p "$HOME/.config/claude"
+    cp "{{.ClaudeCodeConfig}}" "$HOME/.config/claude/"
+fi
+{{end}}
+
+{{range .OllamaModels}}
+if command -v ollama &>/dev/null; then
+    log "Pulling Ollama model {{.}}"
+    ollama pull "{{.}}" || true
+else
+    log "Warning: Ollama not installed — skipping model {{.}}"
+fi
+{{end}}
 {{end}}
 
 {{define "api-tools"}}
 log "Restoring API tools..."
+{{range .ConfigFiles}}
+if [ -f "{{.BundlePath}}" ]; then
+    log "Restoring {{.Source}}"
+    mkdir -p "$(dirname "$HOME/{{.Source}}")"
+    cp "{{.BundlePath}}" "$HOME/{{.Source}}"
+fi
+{{end}}
+
+{{if .Mkcert}}
+if ! command -v mkcert &>/dev/null; then
+    log "Installing mkcert..."
+    brew install mkcert || true
+fi
+log "CHECKLIST: Run 'mkcert -install' to set up local CA"
+{{end}}
 {{end}}
 
 {{define "xdg-config"}}
 log "Restoring XDG configs..."
+{{if .ConfigDir}}
+if [ -d "{{.ConfigDir}}" ]; then
+    log "Restoring XDG config directory"
+    mkdir -p "$HOME/.config"
+    cp -R "{{.ConfigDir}}/" "$HOME/.config/"
+fi
+{{end}}
+
+{{range .AutoDetected}}
+log "XDG config: {{.}}"
+{{end}}
 {{end}}
 
 {{define "env-files"}}
 log "Restoring environment files..."
+{{if .Encrypted}}
+# Decrypt env files using age
+if ! command -v age &>/dev/null; then
+    log "Installing age for decryption..."
+    brew install age || true
+fi
+
+read -sp "Enter passphrase for environment files: " AGE_PASSPHRASE; echo
+{{range .Files}}
+if [ -f "{{.BundlePath}}.age" ]; then
+    log "Decrypting {{.Source}}"
+    mkdir -p "$(dirname "{{.Source}}")"
+    age --decrypt -o "{{.Source}}" "{{.BundlePath}}.age" <<< "$AGE_PASSPHRASE" || true
+    chmod 600 "{{.Source}}"
+fi
+{{end}}
+unset AGE_PASSPHRASE
+{{else}}
+{{range .Files}}
+if [ -f "{{.BundlePath}}" ]; then
+    log "Restoring {{.Source}}"
+    mkdir -p "$(dirname "{{.Source}}")"
+    cp "{{.BundlePath}}" "{{.Source}}"
+    chmod 600 "{{.Source}}"
+fi
+{{end}}
+{{end}}
 {{end}}
 
 {{define "databases"}}
 log "Restoring database client configs..."
+{{range .ConfigFiles}}
+if [ -f "{{.BundlePath}}" ]; then
+    log "Restoring {{.Source}}"
+    mkdir -p "$(dirname "$HOME/{{.Source}}")"
+    cp "{{.BundlePath}}" "$HOME/{{.Source}}"
+fi
+{{end}}
 {{end}}
 
 {{define "registries"}}
 log "Restoring package registry configs..."
+{{range .ConfigFiles}}
+if [ -f "{{.BundlePath}}" ]; then
+    log "Restoring {{.Source}}"
+    mkdir -p "$(dirname "$HOME/{{.Source}}")"
+    cp "{{.BundlePath}}" "$HOME/{{.Source}}"
+fi
+{{end}}
 {{end}}

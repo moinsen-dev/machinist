@@ -1,7 +1,90 @@
 {{define "ssh"}}
 log "Restoring SSH keys..."
+mkdir -p "$HOME/.ssh"
+chmod 700 "$HOME/.ssh"
+
+{{if .Encrypted}}
+# Decrypt SSH keys using age
+if ! command -v age &>/dev/null; then
+    log "Installing age for decryption..."
+    brew install age || true
+fi
+
+read -sp "Enter passphrase for SSH keys: " AGE_PASSPHRASE; echo
+{{range .Keys}}
+if [ -f "configs/ssh/{{.}}.age" ]; then
+    log "Decrypting SSH key {{.}}"
+    age --decrypt -o "$HOME/.ssh/{{.}}" "configs/ssh/{{.}}.age" <<< "$AGE_PASSPHRASE"
+    chmod 600 "$HOME/.ssh/{{.}}"
+fi
+{{end}}
+unset AGE_PASSPHRASE
+{{else}}
+{{range .Keys}}
+if [ -f "configs/ssh/{{.}}" ]; then
+    log "Restoring SSH key {{.}}"
+    cp "configs/ssh/{{.}}" "$HOME/.ssh/{{.}}"
+    chmod 600 "$HOME/.ssh/{{.}}"
+fi
+{{end}}
+{{end}}
+
+{{if .ConfigFile}}
+if [ -f "{{.ConfigFile}}" ]; then
+    log "Restoring SSH config"
+    cp "{{.ConfigFile}}" "$HOME/.ssh/config"
+    chmod 644 "$HOME/.ssh/config"
+fi
+{{end}}
+
+{{if .KnownHosts}}
+if [ -f "{{.KnownHosts}}" ]; then
+    log "Restoring known_hosts"
+    cp "{{.KnownHosts}}" "$HOME/.ssh/known_hosts"
+    chmod 644 "$HOME/.ssh/known_hosts"
+fi
+{{end}}
 {{end}}
 
 {{define "gpg"}}
 log "Restoring GPG keys..."
+mkdir -p "$HOME/.gnupg"
+chmod 700 "$HOME/.gnupg"
+
+if ! command -v gpg &>/dev/null; then
+    log "Warning: GPG is not installed — install via 'brew install gnupg'"
+else
+    {{if .Encrypted}}
+    # Decrypt GPG key exports using age
+    if ! command -v age &>/dev/null; then
+        log "Installing age for decryption..."
+        brew install age || true
+    fi
+
+    read -sp "Enter passphrase for GPG keys: " AGE_PASSPHRASE; echo
+    {{range .Keys}}
+    if [ -f "configs/gnupg/{{.}}.asc.age" ]; then
+        log "Decrypting and importing GPG key {{.}}"
+        age --decrypt "configs/gnupg/{{.}}.asc.age" <<< "$AGE_PASSPHRASE" | gpg --import || true
+    fi
+    {{end}}
+    unset AGE_PASSPHRASE
+    {{else}}
+    {{range .Keys}}
+    if [ -f "configs/gnupg/{{.}}.asc" ]; then
+        log "Importing GPG key {{.}}"
+        gpg --import "configs/gnupg/{{.}}.asc" || true
+    fi
+    {{end}}
+    {{end}}
+fi
+
+{{range .ConfigFiles}}
+if [ -f "{{.BundlePath}}" ]; then
+    log "Restoring {{.Source}}"
+    mkdir -p "$(dirname "$HOME/{{.Source}}")"
+    cp "{{.BundlePath}}" "$HOME/{{.Source}}"
+    chmod 600 "$HOME/{{.Source}}"
+fi
+{{end}}
 {{end}}

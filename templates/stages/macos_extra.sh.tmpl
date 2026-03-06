@@ -1,15 +1,76 @@
 {{define "locale"}}
 log "Restoring locale & timezone..."
+{{if .Timezone}}
+log "Setting timezone to {{.Timezone}}"
+sudo systemsetup -settimezone "{{.Timezone}}" || true
+{{end}}
+
+{{if .Language}}
+log "Setting language to {{.Language}}"
+defaults write NSGlobalDomain AppleLanguages -array "{{.Language}}" || true
+{{end}}
+
+{{if .Region}}
+log "Setting region to {{.Region}}"
+defaults write NSGlobalDomain AppleLocale -string "{{.Region}}" || true
+{{end}}
+
+{{if .ComputerName}}
+log "Setting computer name to {{.ComputerName}}"
+sudo scutil --set ComputerName "{{.ComputerName}}" || true
+sudo scutil --set HostName "{{.ComputerName}}" || true
+{{end}}
+
+{{if .LocalHostname}}
+log "Setting local hostname to {{.LocalHostname}}"
+sudo scutil --set LocalHostName "{{.LocalHostname}}" || true
+{{end}}
 {{end}}
 
 {{define "login-items"}}
 log "Restoring login items..."
+log "CHECKLIST: Login items require manual configuration (TCC permissions)"
+{{range .Apps}}
+log "  - {{.}} (add via: System Settings > General > Login Items)"
+{{end}}
 {{end}}
 
 {{define "hosts-file"}}
 log "Restoring /etc/hosts..."
+{{if .CustomEntries}}
+log "Adding custom entries to /etc/hosts (requires sudo)"
+{{range .CustomEntries}}
+if ! grep -qF "{{.IP}} {{range .Hostnames}}{{.}} {{end}}" /etc/hosts 2>/dev/null; then
+    echo "{{.IP}} {{range .Hostnames}}{{.}} {{end}}" | sudo tee -a /etc/hosts >/dev/null || true
+    log "  Added: {{.IP}} {{range .Hostnames}}{{.}} {{end}}"
+fi
+{{end}}
+# Flush DNS cache after hosts file changes
+sudo dscacheutil -flushcache || true
+sudo killall -HUP mDNSResponder || true
+{{end}}
 {{end}}
 
 {{define "network"}}
 log "Restoring network settings..."
+{{if .DNS}}
+{{if .DNS.Servers}}
+log "Setting DNS servers on {{.DNS.Interface}}"
+sudo networksetup -setdnsservers "{{.DNS.Interface}}" {{range .DNS.Servers}}"{{.}}" {{end}}|| true
+{{end}}
+{{end}}
+
+{{if .PreferredWifi}}
+log "Preferred Wi-Fi networks to verify:"
+{{range .PreferredWifi}}
+log "  - {{.}}"
+{{end}}
+{{end}}
+
+{{if .VPNConfigs}}
+log "CHECKLIST: VPN configurations require manual setup"
+{{range .VPNConfigs}}
+log "  - {{.Source}} (import in System Settings > Network > VPN)"
+{{end}}
+{{end}}
 {{end}}

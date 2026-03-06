@@ -1,39 +1,136 @@
 {{define "docker"}}
 log "Restoring Docker..."
+{{if .ConfigFile}}
+if [ -f "{{.ConfigFile}}" ]; then
+    log "Restoring Docker config"
+    mkdir -p "$HOME/.docker"
+    cp "{{.ConfigFile}}" "$HOME/.docker/config.json"
+fi
+{{end}}
+
+{{if .Runtime}}
+log "Docker runtime: {{.Runtime}}"
+{{end}}
+
+{{range .FrequentlyUsedImages}}
+log "Pulling Docker image {{.}}"
+docker pull "{{.}}" || true
+{{end}}
 {{end}}
 
 {{define "aws"}}
 log "Restoring AWS CLI..."
+{{if .ConfigFile}}
+if [ -f "{{.ConfigFile}}" ]; then
+    log "Restoring AWS config"
+    mkdir -p "$HOME/.aws"
+    cp "{{.ConfigFile}}" "$HOME/.aws/config"
+    chmod 600 "$HOME/.aws/config"
+fi
+{{end}}
+
+{{if .Profiles}}
+log "AWS profiles to configure:"
+{{range .Profiles}}
+log "  - {{.}} (run: aws configure --profile {{.}})"
+{{end}}
+{{end}}
 {{end}}
 
 {{define "kubernetes"}}
 log "Restoring Kubernetes..."
+{{if .ConfigFile}}
+if [ -f "{{.ConfigFile}}" ]; then
+    log "Restoring kubeconfig"
+    mkdir -p "$HOME/.kube"
+    cp "{{.ConfigFile}}" "$HOME/.kube/config"
+    chmod 600 "$HOME/.kube/config"
+fi
+{{end}}
+
+{{if .Contexts}}
+log "Kubernetes contexts to verify:"
+{{range .Contexts}}
+log "  - {{.}}"
+{{end}}
+{{end}}
 {{end}}
 
 {{define "terraform"}}
 log "Restoring Terraform..."
+{{if .ConfigFile}}
+if [ -f "{{.ConfigFile}}" ]; then
+    log "Restoring Terraform CLI config"
+    cp "{{.ConfigFile}}" "$HOME/.terraformrc"
+fi
+{{end}}
 {{end}}
 
 {{define "vercel"}}
 log "Restoring Vercel..."
+{{if .ConfigDir}}
+if [ -d "{{.ConfigDir}}" ]; then
+    log "Restoring Vercel config directory"
+    mkdir -p "$HOME/.config/com.vercel.cli"
+    cp -R "{{.ConfigDir}}/" "$HOME/.config/com.vercel.cli/"
+fi
+{{end}}
+log "CHECKLIST: Run 'vercel login' to authenticate"
 {{end}}
 
 {{define "gcp"}}
 log "Restoring Google Cloud..."
+{{if .ConfigDir}}
+log "CHECKLIST: Google Cloud SDK config requires re-authentication"
+log "  1. Install: brew install --cask google-cloud-sdk"
+log "  2. Run: gcloud auth login"
+log "  3. Run: gcloud auth application-default login"
+log "  4. Set project: gcloud config set project <PROJECT_ID>"
+{{end}}
 {{end}}
 
 {{define "azure"}}
 log "Restoring Azure..."
+{{if .ConfigDir}}
+log "CHECKLIST: Azure CLI config requires re-authentication"
+log "  1. Install: brew install azure-cli"
+log "  2. Run: az login"
+log "  3. Set subscription: az account set --subscription <SUB_ID>"
+{{end}}
 {{end}}
 
 {{define "flyio"}}
 log "Restoring Fly.io..."
+{{if .ConfigFile}}
+if [ -f "{{.ConfigFile}}" ]; then
+    log "Restoring Fly.io config"
+    mkdir -p "$HOME/.fly"
+    cp "{{.ConfigFile}}" "$HOME/.fly/config.yml"
+fi
+{{end}}
+log "CHECKLIST: Run 'fly auth login' to re-authenticate"
 {{end}}
 
 {{define "firebase"}}
 log "Restoring Firebase..."
+{{if .ConfigDir}}
+if [ -d "{{.ConfigDir}}" ]; then
+    log "Restoring Firebase config directory"
+    mkdir -p "$HOME/.config/firebase"
+    cp -R "{{.ConfigDir}}/" "$HOME/.config/firebase/"
+fi
+{{end}}
+log "CHECKLIST: Run 'firebase login' to re-authenticate"
 {{end}}
 
 {{define "cloudflare"}}
 log "Restoring Cloudflare..."
+{{if .ConfigDir}}
+if [ -d "{{.ConfigDir}}" ]; then
+    log "Restoring Cloudflare/Wrangler config directory"
+    mkdir -p "$HOME/.config/.wrangler"
+    cp -R "{{.ConfigDir}}/" "$HOME/.config/.wrangler/"
+fi
+{{end}}
+log "CHECKLIST: Run 'wrangler login' to re-authenticate"
 {{end}}

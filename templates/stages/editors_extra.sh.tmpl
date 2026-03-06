@@ -1,11 +1,52 @@
 {{define "neovim"}}
 log "Restoring Neovim config..."
+{{if .ConfigDir}}
+if [ -d "{{.ConfigDir}}" ]; then
+    log "Restoring Neovim config directory"
+    mkdir -p "$HOME/.config/nvim"
+    cp -R "{{.ConfigDir}}/" "$HOME/.config/nvim/"
+fi
+{{end}}
+
+{{if .PluginManager}}
+log "Neovim plugin manager: {{.PluginManager}}"
+log "Plugins will auto-install on first launch of Neovim"
+{{end}}
 {{end}}
 
 {{define "jetbrains"}}
 log "Restoring JetBrains IDEs..."
+{{range .IDEs}}
+log "CHECKLIST: {{.Name}}"
+{{if .SettingsExport}}
+log "  Settings export available at: {{.SettingsExport}}"
+log "  Restore via: File > Manage IDE Settings > Import Settings"
+{{end}}
+log "  Recommended: Enable Settings Sync via JetBrains account for automatic sync"
+{{end}}
 {{end}}
 
 {{define "xcode"}}
 log "Restoring Xcode..."
+# Ensure Xcode command line tools are installed
+if ! xcode-select -p &>/dev/null; then
+    log "Installing Xcode command line tools..."
+    xcode-select --install || true
+    log "CHECKLIST: Wait for Xcode CLT installation to complete, then re-run this stage"
+fi
+
+{{range .ConfigFiles}}
+if [ -f "{{.BundlePath}}" ]; then
+    log "Restoring {{.Source}}"
+    mkdir -p "$(dirname "$HOME/{{.Source}}")"
+    cp "{{.BundlePath}}" "$HOME/{{.Source}}"
+fi
+{{end}}
+
+{{if .Simulators}}
+log "Xcode simulators to install:"
+{{range .Simulators}}
+log "  - {{.}} (install via: Xcode > Settings > Platforms)"
+{{end}}
+{{end}}
 {{end}}

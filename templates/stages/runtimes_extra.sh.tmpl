@@ -1,30 +1,173 @@
 {{define "go-runtime"}}
 log "Restoring Go tools..."
-{{range .GlobalPackages}}
-go install "{{.Name}}@latest" || true
-{{end}}
+if ! command -v go &>/dev/null; then
+    log "Warning: Go is not installed — install via Homebrew or https://go.dev/dl/ first"
+else
+    {{range .GlobalPackages}}
+    log "Installing Go package {{.Name}}"
+    go install "{{.Name}}@latest" || true
+    {{end}}
+fi
 {{end}}
 
 {{define "java"}}
 log "Restoring Java/SDKMAN..."
+{{if eq .Manager "sdkman"}}
+# Install SDKMAN if not present
+if [ ! -d "$HOME/.sdkman" ]; then
+    log "Installing SDKMAN..."
+    curl -s "https://get.sdkman.io" | bash
+fi
+source "$HOME/.sdkman/bin/sdkman-init.sh"
+
+{{range .Versions}}
+log "Installing Java {{.}}"
+sdk install java "{{.}}" || true
+{{end}}
+{{if .DefaultVersion}}
+log "Setting default Java to {{.DefaultVersion}}"
+sdk default java "{{.DefaultVersion}}"
+{{end}}
+{{else}}
+log "Warning: Unknown Java manager '{{.Manager}}' — install Java versions manually"
+{{range .Versions}}
+log "  Needed: Java {{.}}"
+{{end}}
+{{end}}
 {{end}}
 
 {{define "flutter"}}
 log "Restoring Flutter..."
+if ! command -v flutter &>/dev/null; then
+    log "Warning: Flutter is not installed — install via https://docs.flutter.dev/get-started/install"
+else
+    {{if .Channel}}
+    log "Switching Flutter to {{.Channel}} channel"
+    flutter channel "{{.Channel}}" || true
+    {{end}}
+    {{if .Version}}
+    log "Upgrading Flutter..."
+    flutter upgrade || true
+    {{end}}
+    {{range .DartGlobalPackages}}
+    log "Activating Dart package {{.}}"
+    dart pub global activate "{{.}}" || true
+    {{end}}
+fi
 {{end}}
 
 {{define "deno"}}
 log "Restoring Deno..."
+if ! command -v deno &>/dev/null; then
+    log "Installing Deno..."
+    curl -fsSL https://deno.land/install.sh | sh
+    export DENO_INSTALL="$HOME/.deno"
+    export PATH="$DENO_INSTALL/bin:$PATH"
+fi
+
+{{range .GlobalPackages}}
+log "Installing Deno package {{.Name}}"
+deno install -g "{{.Name}}" || true
+{{end}}
 {{end}}
 
 {{define "bun"}}
 log "Restoring Bun..."
+if ! command -v bun &>/dev/null; then
+    log "Installing Bun..."
+    curl -fsSL https://bun.sh/install | bash
+    export BUN_INSTALL="$HOME/.bun"
+    export PATH="$BUN_INSTALL/bin:$PATH"
+fi
+
+{{range .GlobalPackages}}
+log "Installing Bun global package {{.Name}}"
+bun install -g "{{.Name}}" || true
+{{end}}
 {{end}}
 
 {{define "ruby"}}
 log "Restoring Ruby..."
+{{if eq .Manager "rbenv"}}
+# Install rbenv if not present
+if ! command -v rbenv &>/dev/null; then
+    log "Installing rbenv..."
+    brew install rbenv ruby-build || true
+    eval "$(rbenv init -)"
+fi
+
+{{range .Versions}}
+log "Installing Ruby {{.}}"
+rbenv install -s "{{.}}" || true
+{{end}}
+{{if .DefaultVersion}}
+log "Setting default Ruby to {{.DefaultVersion}}"
+rbenv global "{{.DefaultVersion}}"
+{{end}}
+{{else if eq .Manager "rvm"}}
+# Install RVM if not present
+if ! command -v rvm &>/dev/null; then
+    log "Installing RVM..."
+    curl -sSL https://get.rvm.io | bash -s stable
+    source "$HOME/.rvm/scripts/rvm"
+fi
+
+{{range .Versions}}
+log "Installing Ruby {{.}}"
+rvm install "{{.}}" || true
+{{end}}
+{{if .DefaultVersion}}
+log "Setting default Ruby to {{.DefaultVersion}}"
+rvm use "{{.DefaultVersion}}" --default
+{{end}}
+{{else}}
+log "Warning: Unknown Ruby manager '{{.Manager}}' — install Ruby versions manually"
+{{end}}
+
+{{range .GlobalGems}}
+log "Installing gem {{.Name}}"
+gem install "{{.Name}}" || true
+{{end}}
 {{end}}
 
 {{define "asdf"}}
 log "Restoring asdf/mise..."
+{{if eq .Manager "mise"}}
+# Install mise if not present
+if ! command -v mise &>/dev/null; then
+    log "Installing mise..."
+    curl https://mise.run | sh
+    eval "$(~/.local/bin/mise activate bash)"
+fi
+
+{{range .Plugins}}
+{{range .Versions}}
+log "Installing {{$.Name}} {{.}} via mise"
+mise install "{{$.Name}}@{{.}}" || true
+{{end}}
+{{end}}
+{{else}}
+# Install asdf if not present
+if ! command -v asdf &>/dev/null; then
+    log "Installing asdf..."
+    brew install asdf || true
+    . "$(brew --prefix asdf)/libexec/asdf.sh" 2>/dev/null || true
+fi
+
+{{range .Plugins}}
+log "Adding asdf plugin {{.Name}}"
+asdf plugin add "{{.Name}}" || true
+{{range .Versions}}
+log "Installing {{$.Name}} {{.}}"
+asdf install "{{$.Name}}" "{{.}}" || true
+{{end}}
+{{end}}
+{{end}}
+
+{{if .ToolVersionsFile}}
+if [ -f "{{.ToolVersionsFile}}" ]; then
+    log "Restoring .tool-versions file"
+    cp "{{.ToolVersionsFile}}" "$HOME/.tool-versions"
+fi
+{{end}}
 {{end}}
