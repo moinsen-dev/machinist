@@ -6,6 +6,36 @@ Scan. Bundle. Restore. Identical dev setup in minutes.
 
 ---
 
+## Install
+
+```bash
+# One-liner install (latest release)
+curl -fsSL https://raw.githubusercontent.com/moinsen-dev/machinist/main/install.sh | bash
+
+# Or with Homebrew (coming soon)
+# brew install moinsen-dev/tap/machinist
+
+# Or build from source
+git clone https://github.com/moinsen-dev/machinist.git && cd machinist && make install
+```
+
+## Quick Start
+
+```bash
+# 1. On your current Mac — capture everything
+machinist snapshot --output setup.toml
+
+# 2. Bundle into a portable DMG
+machinist dmg setup.toml --output ~/Desktop/machinist-setup.dmg
+
+# 3. On your new Mac — restore
+#    Option A: Double-click install.command in the DMG
+#    Option B: CLI
+machinist restore setup.toml
+```
+
+---
+
 A developer buys a new Mac. Instead of spending days installing tools, copying shell configs, and cloning repos, they run **one DMG** — and have an identical working environment in 20 minutes.
 
 **machinist** is a Go CLI tool that:
@@ -215,7 +245,8 @@ Data is categorized into three sensitivity levels:
 
 ```bash
 # Build
-go build ./cmd/machinist
+make build
+./machinist version
 
 # Run
 go run ./cmd/machinist snapshot --dry-run
@@ -223,8 +254,22 @@ go run ./cmd/machinist scan homebrew
 go run ./cmd/machinist list scanners
 
 # Test
-go test ./...
+make test
 ```
+
+## Releasing
+
+Releases are built with [goreleaser](https://goreleaser.com/) and published to GitHub Releases.
+
+```bash
+# Test a release build locally (no publish)
+make release-local
+
+# Create a tagged release
+make release TAG=v0.1.0
+```
+
+This produces signed macOS binaries for both Apple Silicon (arm64) and Intel (amd64). The `install.sh` script automatically detects the architecture and downloads the right binary.
 
 ## License
 

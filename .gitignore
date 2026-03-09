@@ -1,3 +1,4 @@
 /machinist
 machinist-snapshot.toml
 *.out
+dist/
