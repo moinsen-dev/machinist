@@ -43,10 +43,17 @@ func (s *LocaleScanner) Scan(ctx context.Context) (*scanner.ScanResult, error) {
 		section.Region = locale
 	}
 
-	// Read timezone
-	tzOutput, err := s.cmd.Run(ctx, "systemsetup", "-gettimezone")
+	// Read timezone via /etc/localtime symlink (no sudo required).
+	// Falls back to systemsetup if symlink is missing.
+	tzOutput, err := s.cmd.Run(ctx, "readlink", "/etc/localtime")
 	if err == nil {
-		section.Timezone = parseTimezone(tzOutput)
+		section.Timezone = parseTimezonePath(tzOutput)
+	}
+	if section.Timezone == "" {
+		tzOutput, err = s.cmd.Run(ctx, "systemsetup", "-gettimezone")
+		if err == nil && !strings.Contains(tzOutput, "administrator") {
+			section.Timezone = parseTimezone(tzOutput)
+		}
 	}
 
 	// Read computer name
@@ -84,6 +91,16 @@ func parseFirstLanguage(output string) string {
 		if line != "" {
 			return line
 		}
+	}
+	return ""
+}
+
+// parseTimezonePath extracts the timezone from /etc/localtime symlink target.
+// Example input: "/var/db/timezone/zoneinfo/Europe/Berlin"
+func parseTimezonePath(output string) string {
+	output = strings.TrimSpace(output)
+	if idx := strings.Index(output, "zoneinfo/"); idx >= 0 {
+		return output[idx+len("zoneinfo/"):]
 	}
 	return ""
 }

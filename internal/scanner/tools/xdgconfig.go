@@ -52,20 +52,21 @@ func (s *XDGConfigScanner) Scan(ctx context.Context) (*scanner.ScanResult, error
 		return result, nil
 	}
 
-	section := &domain.XDGConfigSection{
-		ConfigDir: configDir,
-	}
-
+	var autoDetected []string
 	for _, entry := range entries {
 		if !entry.IsDir() {
 			continue
 		}
 		name := entry.Name()
 		if knownXDGTools[name] {
-			section.AutoDetected = append(section.AutoDetected, name)
+			autoDetected = append(autoDetected, name)
 		}
 	}
 
-	result.XDGConfig = section
+	if len(autoDetected) > 0 {
+		result.XDGConfig = &domain.XDGConfigSection{
+			AutoDetected: autoDetected,
+		}
+	}
 	return result, nil
 }

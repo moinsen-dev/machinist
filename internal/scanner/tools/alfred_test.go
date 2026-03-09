@@ -45,7 +45,7 @@ func TestAlfredScanner_Scan_PrimaryDir(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, result.Alfred)
-	assert.Equal(t, alfredDir, result.Alfred.ConfigDir)
+	assert.Equal(t, filepath.Join("Library", "Application Support", "Alfred"), result.Alfred.ConfigDir)
 }
 
 func TestAlfredScanner_Scan_FallbackPlist(t *testing.T) {
@@ -61,7 +61,7 @@ func TestAlfredScanner_Scan_FallbackPlist(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, result.Alfred)
-	assert.Equal(t, plistPath, result.Alfred.ConfigDir)
+	assert.Equal(t, filepath.Join("Library", "Preferences", "com.runningwithcrayons.Alfred-Preferences-3.plist"), result.Alfred.ConfigDir)
 }
 
 func TestAlfredScanner_Scan_PrimaryTakesPrecedence(t *testing.T) {
@@ -82,5 +82,5 @@ func TestAlfredScanner_Scan_PrimaryTakesPrecedence(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, result.Alfred)
 	// Primary should take precedence over fallback
-	assert.Equal(t, alfredDir, result.Alfred.ConfigDir)
+	assert.Equal(t, filepath.Join("Library", "Application Support", "Alfred"), result.Alfred.ConfigDir)
 }

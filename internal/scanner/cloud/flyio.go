@@ -36,9 +36,11 @@ func (s *FlyioScanner) Scan(ctx context.Context) (*scanner.ScanResult, error) {
 
 	configFile := filepath.Join(s.homeDir, ".fly", "config.yml")
 	if util.FileExists(configFile) {
-		section.ConfigFile = configFile
+		section.ConfigFile = filepath.Join(".fly", "config.yml")
 	}
 
-	result.Flyio = section
+	if section.ConfigFile != "" {
+		result.Flyio = section
+	}
 	return result, nil
 }

@@ -83,9 +83,10 @@ func (s *TmuxScanner) Scan(ctx context.Context) (*scanner.ScanResult, error) {
 	// Extract TPM plugin names from the combined config content.
 	section.TPMPlugins = parseTPMPlugins(combinedContent.String())
 
-	// Only attach a section if tmux is installed (we already checked), even when
-	// no config files are found – this signals "tmux present, no config".
-	result.Tmux = section
+	// Only attach a section if there is actual content to restore.
+	if len(section.ConfigFiles) > 0 || len(section.TPMPlugins) > 0 {
+		result.Tmux = section
+	}
 	return result, nil
 }
 

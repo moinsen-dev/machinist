@@ -38,7 +38,7 @@ func (s *OnePasswordScanner) Scan(ctx context.Context) (*scanner.ScanResult, err
 	}
 
 	result.OnePassword = &domain.OnePasswordSection{
-		ConfigDir: configDir,
+		ConfigDir: filepath.Join(".config", "op"),
 	}
 	return result, nil
 }

@@ -31,7 +31,7 @@ func (s *AlfredScanner) Scan(ctx context.Context) (*scanner.ScanResult, error) {
 	configDir := filepath.Join(s.homeDir, "Library", "Application Support", "Alfred")
 	if util.DirExists(configDir) {
 		result.Alfred = &domain.AlfredSection{
-			ConfigDir: configDir,
+			ConfigDir: filepath.Join("Library", "Application Support", "Alfred"),
 		}
 		return result, nil
 	}
@@ -40,7 +40,7 @@ func (s *AlfredScanner) Scan(ctx context.Context) (*scanner.ScanResult, error) {
 	plistPath := filepath.Join(s.homeDir, "Library", "Preferences", "com.runningwithcrayons.Alfred-Preferences-3.plist")
 	if util.FileExists(plistPath) {
 		result.Alfred = &domain.AlfredSection{
-			ConfigDir: plistPath,
+			ConfigDir: filepath.Join("Library", "Preferences", "com.runningwithcrayons.Alfred-Preferences-3.plist"),
 		}
 		return result, nil
 	}

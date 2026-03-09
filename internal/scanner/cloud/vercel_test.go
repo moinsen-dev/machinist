@@ -49,8 +49,7 @@ func TestVercelScanner_Scan_InstalledNoConfig(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	require.NotNil(t, result.Vercel)
-	assert.Empty(t, result.Vercel.ConfigDir)
+	assert.Nil(t, result.Vercel)
 }
 
 func TestVercelScanner_Scan_WithConfigDir(t *testing.T) {
@@ -68,5 +67,5 @@ func TestVercelScanner_Scan_WithConfigDir(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, result.Vercel)
-	assert.Equal(t, configDir, result.Vercel.ConfigDir)
+	assert.Equal(t, ".vercel", result.Vercel.ConfigDir)
 }

@@ -43,15 +43,17 @@ func (c *CloudflareScanner) Scan(ctx context.Context) (*scanner.ScanResult, erro
 	// Primary config location: ~/.config/.wrangler/
 	wranglerDir := filepath.Join(c.homeDir, ".config", ".wrangler")
 	if util.DirExists(wranglerDir) {
-		section.ConfigDir = wranglerDir
+		section.ConfigDir = filepath.Join(".config", ".wrangler")
 	} else {
 		// Fallback: ~/.wrangler/config/
 		fallbackDir := filepath.Join(c.homeDir, ".wrangler", "config")
 		if util.DirExists(fallbackDir) {
-			section.ConfigDir = fallbackDir
+			section.ConfigDir = filepath.Join(".wrangler", "config")
 		}
 	}
 
-	result.CloudflareWrangler = section
+	if section.ConfigDir != "" {
+		result.CloudflareWrangler = section
+	}
 	return result, nil
 }

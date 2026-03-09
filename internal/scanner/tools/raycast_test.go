@@ -45,5 +45,5 @@ func TestRaycastScanner_Scan_DirExists(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, result.Raycast)
-	assert.Equal(t, raycastDir, result.Raycast.ExportFile)
+	assert.Equal(t, filepath.Join("Library", "Application Support", "com.raycast.macos"), result.Raycast.ExportFile)
 }

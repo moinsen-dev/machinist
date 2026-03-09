@@ -60,8 +60,8 @@ func TestSSHScanner_Scan_HappyPath(t *testing.T) {
 
 	ssh := result.SSH
 	assert.True(t, ssh.Encrypted)
-	assert.Equal(t, filepath.Join(sshDir, "config"), ssh.ConfigFile)
-	assert.Equal(t, filepath.Join(sshDir, "known_hosts"), ssh.KnownHosts)
+	assert.Equal(t, filepath.Join(".ssh", "config"), ssh.ConfigFile)
+	assert.Equal(t, filepath.Join(".ssh", "known_hosts"), ssh.KnownHosts)
 
 	// Only private keys (no .pub files).
 	require.Len(t, ssh.Keys, 2)
@@ -69,8 +69,8 @@ func TestSSHScanner_Scan_HappyPath(t *testing.T) {
 	sortedKeys := make([]string, len(ssh.Keys))
 	copy(sortedKeys, ssh.Keys)
 	sort.Strings(sortedKeys)
-	assert.Equal(t, filepath.Join(sshDir, "id_ed25519"), sortedKeys[0])
-	assert.Equal(t, filepath.Join(sshDir, "id_rsa"), sortedKeys[1])
+	assert.Equal(t, "id_ed25519", sortedKeys[0])
+	assert.Equal(t, "id_rsa", sortedKeys[1])
 }
 
 func TestSSHScanner_Scan_NoConfigOrKnownHosts(t *testing.T) {
@@ -90,7 +90,7 @@ func TestSSHScanner_Scan_NoConfigOrKnownHosts(t *testing.T) {
 	assert.Empty(t, result.SSH.ConfigFile)
 	assert.Empty(t, result.SSH.KnownHosts)
 	require.Len(t, result.SSH.Keys, 1)
-	assert.Equal(t, filepath.Join(sshDir, "id_ecdsa"), result.SSH.Keys[0])
+	assert.Equal(t, "id_ecdsa", result.SSH.Keys[0])
 }
 
 func TestSSHScanner_Scan_NoPubFilesInKeys(t *testing.T) {
@@ -125,7 +125,7 @@ func TestSSHScanner_Scan_NonKeyFilesIgnored(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, result.SSH)
 	require.Len(t, result.SSH.Keys, 1)
-	assert.Equal(t, filepath.Join(sshDir, "id_rsa"), result.SSH.Keys[0])
+	assert.Equal(t, "id_rsa", result.SSH.Keys[0])
 }
 
 func TestSSHScanner_Scan_EncryptedAlwaysTrue(t *testing.T) {

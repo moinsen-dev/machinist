@@ -70,7 +70,7 @@ func TestNeovimScanner_Scan_WithConfigDir(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, result.Neovim)
-	assert.Equal(t, configDir, result.Neovim.ConfigDir)
+	assert.Equal(t, filepath.Join(".config", "nvim"), result.Neovim.ConfigDir)
 	assert.Empty(t, result.Neovim.PluginManager)
 }
 
@@ -163,6 +163,6 @@ func TestNeovimScanner_Scan_ConfigDirAndPluginManager(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, result.Neovim)
-	assert.Equal(t, configDir, result.Neovim.ConfigDir)
+	assert.Equal(t, filepath.Join(".config", "nvim"), result.Neovim.ConfigDir)
 	assert.Equal(t, "lazy.nvim", result.Neovim.PluginManager)
 }

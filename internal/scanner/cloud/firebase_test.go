@@ -55,7 +55,7 @@ func TestFirebaseScanner_Scan_PrimaryConfigDir(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, result.Firebase)
-	assert.Equal(t, firebaseDir, result.Firebase.ConfigDir)
+	assert.Equal(t, filepath.Join(".config", "firebase"), result.Firebase.ConfigDir)
 }
 
 func TestFirebaseScanner_Scan_FallbackConfigstore(t *testing.T) {
@@ -77,7 +77,7 @@ func TestFirebaseScanner_Scan_FallbackConfigstore(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, result.Firebase)
-	assert.Equal(t, configstoreDir, result.Firebase.ConfigDir)
+	assert.Equal(t, filepath.Join(".config", "configstore"), result.Firebase.ConfigDir)
 }
 
 func TestFirebaseScanner_Scan_InstalledNoConfig(t *testing.T) {
@@ -93,6 +93,5 @@ func TestFirebaseScanner_Scan_InstalledNoConfig(t *testing.T) {
 	result, err := s.Scan(context.Background())
 
 	require.NoError(t, err)
-	require.NotNil(t, result.Firebase)
-	assert.Empty(t, result.Firebase.ConfigDir)
+	assert.Nil(t, result.Firebase)
 }

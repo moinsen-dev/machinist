@@ -36,9 +36,11 @@ func (s *GCPScanner) Scan(ctx context.Context) (*scanner.ScanResult, error) {
 
 	configDir := filepath.Join(s.homeDir, ".config", "gcloud")
 	if util.DirExists(configDir) {
-		section.ConfigDir = configDir
+		section.ConfigDir = filepath.Join(".config", "gcloud")
 	}
 
-	result.GCP = section
+	if section.ConfigDir != "" {
+		result.GCP = section
+	}
 	return result, nil
 }

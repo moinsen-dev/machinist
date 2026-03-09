@@ -62,7 +62,7 @@ func TestGitHubCLIScanner_Scan_HappyPath(t *testing.T) {
 	require.NotNil(t, result.GitHubCLI)
 
 	cli := result.GitHubCLI
-	assert.Equal(t, ghConfigDir, cli.ConfigDir)
+	assert.Equal(t, filepath.Join(".config", "gh"), cli.ConfigDir)
 	require.Len(t, cli.Extensions, 2)
 	assert.Equal(t, "gh-copilot", cli.Extensions[0])
 	assert.Equal(t, "gh-dash", cli.Extensions[1])
@@ -84,9 +84,8 @@ func TestGitHubCLIScanner_Scan_NoExtensions(t *testing.T) {
 	result, err := s.Scan(context.Background())
 
 	require.NoError(t, err)
-	require.NotNil(t, result.GitHubCLI)
-	assert.Empty(t, result.GitHubCLI.Extensions)
-	assert.Empty(t, result.GitHubCLI.ConfigDir)
+	// No config dir, no extensions → section should be nil.
+	assert.Nil(t, result.GitHubCLI)
 }
 
 func TestGitHubCLIScanner_Scan_ExtensionListError(t *testing.T) {
@@ -111,7 +110,7 @@ func TestGitHubCLIScanner_Scan_ExtensionListError(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, result.GitHubCLI)
 	// ConfigDir is still recorded even when extension list fails.
-	assert.Equal(t, ghConfigDir, result.GitHubCLI.ConfigDir)
+	assert.Equal(t, filepath.Join(".config", "gh"), result.GitHubCLI.ConfigDir)
 	assert.Empty(t, result.GitHubCLI.Extensions)
 }
 

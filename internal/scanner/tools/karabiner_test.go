@@ -59,5 +59,5 @@ func TestKarabinerScanner_Scan_DirAndJSONExist(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, result.Karabiner)
-	assert.Equal(t, karabinerDir, result.Karabiner.ConfigDir)
+	assert.Equal(t, filepath.Join(".config", "karabiner"), result.Karabiner.ConfigDir)
 }

@@ -48,5 +48,5 @@ func TestRectangleScanner_Scan_FileExists(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, result.Rectangle)
-	assert.Equal(t, configFile, result.Rectangle.ConfigFile)
+	assert.Equal(t, filepath.Join("Library", "Preferences", "com.knewton.Rectangle.plist"), result.Rectangle.ConfigFile)
 }

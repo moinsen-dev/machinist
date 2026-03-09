@@ -33,7 +33,7 @@ func (s *RaycastScanner) Scan(ctx context.Context) (*scanner.ScanResult, error) 
 	}
 
 	result.Raycast = &domain.RaycastSection{
-		ExportFile: exportDir,
+		ExportFile: filepath.Join("Library", "Application Support", "com.raycast.macos"),
 	}
 	return result, nil
 }

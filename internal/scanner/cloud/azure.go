@@ -36,9 +36,11 @@ func (s *AzureScanner) Scan(ctx context.Context) (*scanner.ScanResult, error) {
 
 	configDir := filepath.Join(s.homeDir, ".azure")
 	if util.DirExists(configDir) {
-		section.ConfigDir = configDir
+		section.ConfigDir = ".azure"
 	}
 
-	result.Azure = section
+	if section.ConfigDir != "" {
+		result.Azure = section
+	}
 	return result, nil
 }

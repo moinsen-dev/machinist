@@ -54,9 +54,8 @@ func TestTmuxScanner_Scan_NoConfigFiles(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	require.NotNil(t, result.Tmux)
-	assert.Empty(t, result.Tmux.ConfigFiles)
-	assert.Empty(t, result.Tmux.TPMPlugins)
+	// No config files and no plugins → section should be nil.
+	assert.Nil(t, result.Tmux)
 }
 
 func TestTmuxScanner_Scan_HomeTmuxConf(t *testing.T) {

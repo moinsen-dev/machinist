@@ -43,15 +43,17 @@ func (f *FirebaseScanner) Scan(ctx context.Context) (*scanner.ScanResult, error)
 	// Primary config location: ~/.config/firebase/
 	firebaseDir := filepath.Join(f.homeDir, ".config", "firebase")
 	if util.DirExists(firebaseDir) {
-		section.ConfigDir = firebaseDir
+		section.ConfigDir = filepath.Join(".config", "firebase")
 	} else {
 		// Fallback: ~/.config/configstore/firebase-tools.json
 		configstoreFile := filepath.Join(f.homeDir, ".config", "configstore", "firebase-tools.json")
 		if util.FileExists(configstoreFile) {
-			section.ConfigDir = filepath.Join(f.homeDir, ".config", "configstore")
+			section.ConfigDir = filepath.Join(".config", "configstore")
 		}
 	}
 
-	result.Firebase = section
+	if section.ConfigDir != "" {
+		result.Firebase = section
+	}
 	return result, nil
 }

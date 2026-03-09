@@ -44,7 +44,7 @@ func (g *GitHubCLIScanner) Scan(ctx context.Context) (*scanner.ScanResult, error
 	// Record the config directory if it exists.
 	ghConfigDir := filepath.Join(g.homeDir, ".config", "gh")
 	if util.DirExists(ghConfigDir) {
-		section.ConfigDir = ghConfigDir
+		section.ConfigDir = filepath.Join(".config", "gh")
 	}
 
 	// List installed extensions. Output format per line:
@@ -64,6 +64,8 @@ func (g *GitHubCLIScanner) Scan(ctx context.Context) (*scanner.ScanResult, error
 		}
 	}
 
-	result.GitHubCLI = section
+	if section.ConfigDir != "" || len(section.Extensions) > 0 {
+		result.GitHubCLI = section
+	}
 	return result, nil
 }

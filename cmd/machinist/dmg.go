@@ -25,16 +25,28 @@ var (
 )
 
 var dmgCmd = &cobra.Command{
-	Use:   "dmg",
-	Short: "Scan environment and create a DMG restore bundle",
+	Use:   "dmg [manifest.toml]",
+	Short: "Create a DMG restore bundle from a manifest or by scanning the environment",
+	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		reg := newRegistry()
 		ctx := context.Background()
 
 		var snap *domain.Snapshot
 		var errs []error
 
-		if dmgInteractive {
+		if len(args) == 1 {
+			// Load from existing manifest file
+			data, err := os.ReadFile(args[0])
+			if err != nil {
+				return fmt.Errorf("read manifest: %w", err)
+			}
+			snap, err = domain.UnmarshalManifest(data)
+			if err != nil {
+				return fmt.Errorf("parse manifest: %w", err)
+			}
+			fmt.Fprintf(cmd.OutOrStdout(), "Loaded manifest from %s (%d stages)\n", args[0], snap.StageCount())
+		} else if dmgInteractive {
+			reg := newRegistry()
 			var err error
 			snap, errs, err = runInteractiveScan(cmd, reg, ctx)
 			if err != nil {
@@ -44,6 +56,7 @@ var dmgCmd = &cobra.Command{
 				return nil // cancelled
 			}
 		} else {
+			reg := newRegistry()
 			fmt.Fprintln(cmd.OutOrStdout(), "Scanning environment...")
 			progress := newProgressWriter(cmd.OutOrStdout())
 			snap, errs = reg.ScanAllWithProgress(ctx, progress)

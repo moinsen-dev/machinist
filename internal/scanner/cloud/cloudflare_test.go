@@ -55,7 +55,7 @@ func TestCloudflareScanner_Scan_PrimaryConfigDir(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, result.CloudflareWrangler)
-	assert.Equal(t, wranglerDir, result.CloudflareWrangler.ConfigDir)
+	assert.Equal(t, filepath.Join(".config", ".wrangler"), result.CloudflareWrangler.ConfigDir)
 }
 
 func TestCloudflareScanner_Scan_FallbackWranglerConfig(t *testing.T) {
@@ -76,7 +76,7 @@ func TestCloudflareScanner_Scan_FallbackWranglerConfig(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, result.CloudflareWrangler)
-	assert.Equal(t, fallbackDir, result.CloudflareWrangler.ConfigDir)
+	assert.Equal(t, filepath.Join(".wrangler", "config"), result.CloudflareWrangler.ConfigDir)
 }
 
 func TestCloudflareScanner_Scan_InstalledNoConfig(t *testing.T) {
@@ -92,6 +92,5 @@ func TestCloudflareScanner_Scan_InstalledNoConfig(t *testing.T) {
 	result, err := s.Scan(context.Background())
 
 	require.NoError(t, err)
-	require.NotNil(t, result.CloudflareWrangler)
-	assert.Empty(t, result.CloudflareWrangler.ConfigDir)
+	assert.Nil(t, result.CloudflareWrangler)
 }

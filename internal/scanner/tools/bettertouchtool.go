@@ -33,7 +33,7 @@ func (s *BetterTouchToolScanner) Scan(ctx context.Context) (*scanner.ScanResult,
 	}
 
 	result.BetterTouchTool = &domain.BetterTouchToolSection{
-		ConfigFile: configDir,
+		ConfigFile: filepath.Join("Library", "Application Support", "BetterTouchTool"),
 	}
 	return result, nil
 }

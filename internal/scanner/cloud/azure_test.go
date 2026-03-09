@@ -49,8 +49,7 @@ func TestAzureScanner_Scan_InstalledNoConfig(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	require.NotNil(t, result.Azure)
-	assert.Empty(t, result.Azure.ConfigDir)
+	assert.Nil(t, result.Azure)
 }
 
 func TestAzureScanner_Scan_WithConfigDir(t *testing.T) {
@@ -68,5 +67,5 @@ func TestAzureScanner_Scan_WithConfigDir(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, result.Azure)
-	assert.Equal(t, configDir, result.Azure.ConfigDir)
+	assert.Equal(t, ".azure", result.Azure.ConfigDir)
 }

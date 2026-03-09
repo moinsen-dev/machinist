@@ -322,6 +322,7 @@ type GoSection struct {
 
 // AsdfSection captures asdf/mise plugins, versions, and the tool-versions file.
 type AsdfSection struct {
+	Manager          string       `toml:"manager,omitempty"` // "asdf" or "mise"
 	Plugins          []AsdfPlugin `toml:"plugins,omitempty"`
 	ToolVersionsFile string       `toml:"tool_versions_file,omitempty"`
 }

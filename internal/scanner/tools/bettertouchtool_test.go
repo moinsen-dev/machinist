@@ -45,5 +45,5 @@ func TestBetterTouchToolScanner_Scan_DirExists(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, result.BetterTouchTool)
-	assert.Equal(t, bttDir, result.BetterTouchTool.ConfigFile)
+	assert.Equal(t, filepath.Join("Library", "Application Support", "BetterTouchTool"), result.BetterTouchTool.ConfigFile)
 }

@@ -49,8 +49,7 @@ func TestGCPScanner_Scan_InstalledNoConfig(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	require.NotNil(t, result.GCP)
-	assert.Empty(t, result.GCP.ConfigDir)
+	assert.Nil(t, result.GCP)
 }
 
 func TestGCPScanner_Scan_WithConfigDir(t *testing.T) {
@@ -68,5 +67,5 @@ func TestGCPScanner_Scan_WithConfigDir(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, result.GCP)
-	assert.Equal(t, configDir, result.GCP.ConfigDir)
+	assert.Equal(t, filepath.Join(".config", "gcloud"), result.GCP.ConfigDir)
 }

@@ -28,7 +28,9 @@ func TestAIToolsScanner_Category(t *testing.T) {
 
 func TestAIToolsScanner_Scan_BothFound(t *testing.T) {
 	homeDir := t.TempDir()
-	require.NoError(t, os.MkdirAll(filepath.Join(homeDir, ".claude"), 0o755))
+	claudeDir := filepath.Join(homeDir, ".claude")
+	require.NoError(t, os.MkdirAll(claudeDir, 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(claudeDir, "settings.json"), []byte("{}"), 0o644))
 
 	mock := &util.MockCommandRunner{
 		Responses: map[string]util.MockResponse{
@@ -41,13 +43,15 @@ func TestAIToolsScanner_Scan_BothFound(t *testing.T) {
 	result, err := s.Scan(context.Background())
 	require.NoError(t, err)
 	require.NotNil(t, result.AITools)
-	assert.Equal(t, filepath.Join(homeDir, ".claude"), result.AITools.ClaudeCodeConfig)
+	assert.Equal(t, ".claude/settings.json", result.AITools.ClaudeCodeConfig)
 	assert.Equal(t, []string{"llama3:latest", "mistral:7b"}, result.AITools.OllamaModels)
 }
 
 func TestAIToolsScanner_Scan_OnlyClaude(t *testing.T) {
 	homeDir := t.TempDir()
-	require.NoError(t, os.MkdirAll(filepath.Join(homeDir, ".claude"), 0o755))
+	claudeDir := filepath.Join(homeDir, ".claude")
+	require.NoError(t, os.MkdirAll(claudeDir, 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(claudeDir, "CLAUDE.md"), []byte("# Claude"), 0o644))
 
 	mock := &util.MockCommandRunner{
 		Responses: map[string]util.MockResponse{},
@@ -57,7 +61,7 @@ func TestAIToolsScanner_Scan_OnlyClaude(t *testing.T) {
 	result, err := s.Scan(context.Background())
 	require.NoError(t, err)
 	require.NotNil(t, result.AITools)
-	assert.Equal(t, filepath.Join(homeDir, ".claude"), result.AITools.ClaudeCodeConfig)
+	assert.Equal(t, ".claude/CLAUDE.md", result.AITools.ClaudeCodeConfig)
 	assert.Empty(t, result.AITools.OllamaModels)
 }
 

@@ -38,7 +38,7 @@ func (s *NeovimScanner) Scan(ctx context.Context) (*scanner.ScanResult, error) {
 	// Config directory.
 	configDir := filepath.Join(s.homeDir, ".config", "nvim")
 	if util.DirExists(configDir) {
-		section.ConfigDir = configDir
+		section.ConfigDir = filepath.Join(".config", "nvim")
 	}
 
 	// Plugin manager detection — check well-known data directories.

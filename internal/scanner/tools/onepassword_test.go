@@ -41,7 +41,7 @@ func TestOnePasswordScanner_Scan_Found(t *testing.T) {
 	result, err := s.Scan(context.Background())
 	require.NoError(t, err)
 	require.NotNil(t, result.OnePassword)
-	assert.Equal(t, configDir, result.OnePassword.ConfigDir)
+	assert.Equal(t, filepath.Join(".config", "op"), result.OnePassword.ConfigDir)
 }
 
 func TestOnePasswordScanner_Scan_NotInstalled(t *testing.T) {

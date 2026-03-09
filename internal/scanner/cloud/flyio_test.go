@@ -49,8 +49,7 @@ func TestFlyioScanner_Scan_InstalledNoConfig(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	require.NotNil(t, result.Flyio)
-	assert.Empty(t, result.Flyio.ConfigFile)
+	assert.Nil(t, result.Flyio)
 }
 
 func TestFlyioScanner_Scan_WithConfigFile(t *testing.T) {
@@ -70,5 +69,5 @@ func TestFlyioScanner_Scan_WithConfigFile(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, result.Flyio)
-	assert.Equal(t, configFile, result.Flyio.ConfigFile)
+	assert.Equal(t, filepath.Join(".fly", "config.yml"), result.Flyio.ConfigFile)
 }

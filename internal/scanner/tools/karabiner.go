@@ -39,7 +39,7 @@ func (s *KarabinerScanner) Scan(ctx context.Context) (*scanner.ScanResult, error
 	}
 
 	result.Karabiner = &domain.KarabinerSection{
-		ConfigDir: configDir,
+		ConfigDir: filepath.Join(".config", "karabiner"),
 	}
 	return result, nil
 }

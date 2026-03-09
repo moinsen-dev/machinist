@@ -56,7 +56,7 @@ func (a *AsdfScanner) Scan(ctx context.Context) (*scanner.ScanResult, error) {
 
 // scanAsdf collects plugins and versions using asdf CLI commands.
 func (a *AsdfScanner) scanAsdf(ctx context.Context) (*domain.AsdfSection, error) {
-	section := &domain.AsdfSection{}
+	section := &domain.AsdfSection{Manager: "asdf"}
 
 	// Collect plugin names.
 	pluginNames, err := a.cmd.RunLines(ctx, "asdf", "plugin", "list")
@@ -103,7 +103,7 @@ func (a *AsdfScanner) scanAsdf(ctx context.Context) (*domain.AsdfSection, error)
 
 // scanMise collects plugins and versions using mise CLI commands.
 func (a *AsdfScanner) scanMise(ctx context.Context) (*domain.AsdfSection, error) {
-	section := &domain.AsdfSection{}
+	section := &domain.AsdfSection{Manager: "mise"}
 
 	// Collect plugin names.
 	pluginNames, err := a.cmd.RunLines(ctx, "mise", "plugins", "list")

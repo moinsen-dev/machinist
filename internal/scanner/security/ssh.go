@@ -41,19 +41,21 @@ func (s *SSHScanner) Scan(_ context.Context) (*scanner.ScanResult, error) {
 		Encrypted: true,
 	}
 
-	// Check for ~/.ssh/config.
+	// Check for ~/.ssh/config — store as relative path for portability.
 	configPath := filepath.Join(sshDir, "config")
 	if util.FileExists(configPath) {
-		section.ConfigFile = configPath
+		section.ConfigFile = filepath.Join(".ssh", "config")
 	}
 
 	// Check for ~/.ssh/known_hosts.
 	knownHostsPath := filepath.Join(sshDir, "known_hosts")
 	if util.FileExists(knownHostsPath) {
-		section.KnownHosts = knownHostsPath
+		section.KnownHosts = filepath.Join(".ssh", "known_hosts")
 	}
 
 	// List key files: names matching id_* but not ending in .pub.
+	// Store as bare filenames (e.g. "id_ed25519") — the bundler resolves
+	// them relative to ~/.ssh/.
 	entries, err := os.ReadDir(sshDir)
 	if err != nil {
 		// Directory exists but cannot be read — still return what we have.
@@ -67,7 +69,7 @@ func (s *SSHScanner) Scan(_ context.Context) (*scanner.ScanResult, error) {
 		}
 		name := entry.Name()
 		if strings.HasPrefix(name, "id_") && !strings.HasSuffix(name, ".pub") {
-			section.Keys = append(section.Keys, filepath.Join(sshDir, name))
+			section.Keys = append(section.Keys, name)
 		}
 	}
 

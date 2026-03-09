@@ -32,10 +32,14 @@ func (s *AIToolsScanner) Scan(ctx context.Context) (*scanner.ScanResult, error) 
 	section := &domain.AIToolsSection{}
 	found := false
 
-	// Check for Claude Code configuration
-	claudeDir := filepath.Join(s.homeDir, ".claude")
-	if util.DirExists(claudeDir) {
-		section.ClaudeCodeConfig = claudeDir
+	// Check for Claude Code configuration — only the settings file, not the
+	// entire .claude directory (which contains large caches and debug logs).
+	claudeSettings := filepath.Join(s.homeDir, ".claude", "settings.json")
+	if util.FileExists(claudeSettings) {
+		section.ClaudeCodeConfig = ".claude/settings.json"
+		found = true
+	} else if util.FileExists(filepath.Join(s.homeDir, ".claude", "CLAUDE.md")) {
+		section.ClaudeCodeConfig = ".claude/CLAUDE.md"
 		found = true
 	}
 

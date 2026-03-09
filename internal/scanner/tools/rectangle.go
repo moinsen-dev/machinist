@@ -33,7 +33,7 @@ func (s *RectangleScanner) Scan(ctx context.Context) (*scanner.ScanResult, error
 	}
 
 	result.Rectangle = &domain.RectangleSection{
-		ConfigFile: configFile,
+		ConfigFile: filepath.Join("Library", "Preferences", "com.knewton.Rectangle.plist"),
 	}
 	return result, nil
 }

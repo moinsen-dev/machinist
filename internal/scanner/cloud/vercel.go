@@ -32,13 +32,12 @@ func (s *VercelScanner) Scan(ctx context.Context) (*scanner.ScanResult, error) {
 		return result, nil
 	}
 
-	section := &domain.VercelSection{}
-
 	configDir := filepath.Join(s.homeDir, ".vercel")
 	if util.DirExists(configDir) {
-		section.ConfigDir = configDir
+		result.Vercel = &domain.VercelSection{
+			ConfigDir: ".vercel",
+		}
 	}
 
-	result.Vercel = section
 	return result, nil
 }

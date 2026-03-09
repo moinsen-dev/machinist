@@ -43,9 +43,8 @@ func TestXDGConfigScanner_Scan_EmptyConfigDir(t *testing.T) {
 	result, err := s.Scan(context.Background())
 
 	require.NoError(t, err)
-	require.NotNil(t, result.XDGConfig)
-	assert.Equal(t, filepath.Join(homeDir, ".config"), result.XDGConfig.ConfigDir)
-	assert.Empty(t, result.XDGConfig.AutoDetected)
+	// Empty .config dir with no known tools → nil section (nothing to restore)
+	assert.Nil(t, result.XDGConfig)
 }
 
 func TestXDGConfigScanner_Scan_KnownToolsDetected(t *testing.T) {
