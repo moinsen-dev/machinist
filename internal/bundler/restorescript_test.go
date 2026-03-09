@@ -316,6 +316,21 @@ func TestGenerateRestoreScript_HasTiming(t *testing.T) {
 	assert.Contains(t, script, "ELAPSED=$((END_TIME - START_TIME))")
 }
 
+func TestGenerateRestoreScript_HomebrewPATHInit(t *testing.T) {
+	snap := &domain.Snapshot{
+		Meta: newMeta(),
+		Homebrew: &domain.HomebrewSection{
+			Formulae: []domain.Package{{Name: "git"}},
+		},
+	}
+
+	script, err := GenerateRestoreScript(snap)
+	require.NoError(t, err)
+
+	assert.Contains(t, script, `/opt/homebrew/bin/brew shellenv`)
+	assert.Contains(t, script, `/usr/local/bin/brew shellenv`)
+}
+
 func TestGenerateRestoreScript_StageCountMatchesSections(t *testing.T) {
 	// 0 sections = 0 stages
 	snap0 := &domain.Snapshot{Meta: newMeta()}
