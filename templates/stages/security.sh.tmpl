@@ -30,17 +30,17 @@ fi
 {{end}}
 
 {{if .ConfigFile}}
-if [ -f "{{.ConfigFile}}" ]; then
+if [ -f "configs/ssh/config" ]; then
     log "Restoring SSH config"
-    cp "{{.ConfigFile}}" "$HOME/.ssh/config"
+    cp "configs/ssh/config" "$HOME/.ssh/config"
     chmod 644 "$HOME/.ssh/config"
 fi
 {{end}}
 
 {{if .KnownHosts}}
-if [ -f "{{.KnownHosts}}" ]; then
+if [ -f "configs/ssh/known_hosts" ]; then
     log "Restoring known_hosts"
-    cp "{{.KnownHosts}}" "$HOME/.ssh/known_hosts"
+    cp "configs/ssh/known_hosts" "$HOME/.ssh/known_hosts"
     chmod 644 "$HOME/.ssh/known_hosts"
 fi
 {{end}}
@@ -63,17 +63,17 @@ else
 
     read -sp "Enter passphrase for GPG keys: " AGE_PASSPHRASE; echo
     {{range .Keys}}
-    if [ -f "configs/gnupg/{{.}}.asc.age" ]; then
+    if [ -f "configs/gpg/{{.}}.asc.age" ]; then
         log "Decrypting and importing GPG key {{.}}"
-        age --decrypt "configs/gnupg/{{.}}.asc.age" <<< "$AGE_PASSPHRASE" | gpg --import || true
+        age --decrypt "configs/gpg/{{.}}.asc.age" <<< "$AGE_PASSPHRASE" | gpg --import || true
     fi
     {{end}}
     unset AGE_PASSPHRASE
     {{else}}
     {{range .Keys}}
-    if [ -f "configs/gnupg/{{.}}.asc" ]; then
+    if [ -f "configs/gpg/{{.}}.asc" ]; then
         log "Importing GPG key {{.}}"
-        gpg --import "configs/gnupg/{{.}}.asc" || true
+        gpg --import "configs/gpg/{{.}}.asc" || true
     fi
     {{end}}
     {{end}}

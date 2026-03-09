@@ -370,6 +370,41 @@ func TestGenerateRestoreScript_SSHBeforeGitRepos(t *testing.T) {
 	assert.Less(t, gitCfgIdx, gitReposIdx, "Git Config must come before Git Repos")
 }
 
+func TestGenerateRestoreScript_GPGBundlePath(t *testing.T) {
+	snap := &domain.Snapshot{
+		Meta: newMeta(),
+		GPG: &domain.GPGSection{
+			Encrypted: true,
+			Keys:      []string{"ABC123"},
+		},
+	}
+
+	script, err := GenerateRestoreScript(snap)
+	require.NoError(t, err)
+
+	assert.Contains(t, script, `configs/gpg/ABC123`)
+	assert.NotContains(t, script, `configs/gnupg/`)
+}
+
+func TestGenerateRestoreScript_SSHConfigBundlePaths(t *testing.T) {
+	snap := &domain.Snapshot{
+		Meta: newMeta(),
+		SSH: &domain.SSHSection{
+			ConfigFile: ".ssh/config",
+			KnownHosts: ".ssh/known_hosts",
+			Keys:       []string{"id_ed25519"},
+		},
+	}
+
+	script, err := GenerateRestoreScript(snap)
+	require.NoError(t, err)
+
+	assert.Contains(t, script, `if [ -f "configs/ssh/config" ]`)
+	assert.Contains(t, script, `cp "configs/ssh/config" "$HOME/.ssh/config"`)
+	assert.Contains(t, script, `if [ -f "configs/ssh/known_hosts" ]`)
+	assert.Contains(t, script, `cp "configs/ssh/known_hosts" "$HOME/.ssh/known_hosts"`)
+}
+
 func TestGenerateRestoreScript_StageCountMatchesSections(t *testing.T) {
 	// 0 sections = 0 stages
 	snap0 := &domain.Snapshot{Meta: newMeta()}
