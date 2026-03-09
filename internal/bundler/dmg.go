@@ -302,6 +302,15 @@ func collectConfigFiles(snapshot *domain.Snapshot) []domain.ConfigFile {
 		files = append(files, wrap(s.ClaudeCodeConfig, "ai-tools"))
 	}
 
+	// Custom fonts
+	if s := snapshot.Fonts; s != nil {
+		for _, font := range s.CustomFonts {
+			if font.BundlePath != "" {
+				files = append(files, wrap(font.BundlePath, "fonts"))
+			}
+		}
+	}
+
 	return files
 }
 
@@ -353,10 +362,15 @@ func collectConfigDirs(snapshot *domain.Snapshot) []configDirEntry {
 	if s := snapshot.OnePassword; s != nil && s.ConfigDir != "" {
 		add(s.ConfigDir, "onepassword")
 	}
-	if s := snapshot.XDGConfig; s != nil && s.ConfigDir != "" {
-		add(s.ConfigDir, "xdg-config")
+	if s := snapshot.XDGConfig; s != nil {
+		if s.ConfigDir != "" {
+			add(s.ConfigDir, "xdg-config")
+		}
+		// Also bundle each auto-detected XDG tool subdirectory individually.
+		for _, name := range s.AutoDetected {
+			add(filepath.Join(".config", name), filepath.Join("xdg-config", name))
+		}
 	}
-
 	return dirs
 }
 
@@ -378,6 +392,10 @@ func copyConfigDir(entry configDirEntry, bundleDir string, homeDir string) error
 		if walkErr != nil {
 			return nil // skip unreadable entries
 		}
+		// Skip symlinks — they may point outside the tree or be broken.
+		if fi.Mode()&os.ModeSymlink != 0 {
+			return nil
+		}
 		rel, err := filepath.Rel(srcDir, path)
 		if err != nil {
 			return err
@@ -386,6 +404,10 @@ func copyConfigDir(entry configDirEntry, bundleDir string, homeDir string) error
 
 		if fi.IsDir() {
 			return os.MkdirAll(dest, 0755)
+		}
+		// Skip non-regular files (devices, sockets, etc.)
+		if !fi.Mode().IsRegular() {
+			return nil
 		}
 
 		srcFile, err := os.Open(path)
@@ -417,8 +439,13 @@ func copyConfigFile(cf domain.ConfigFile, bundleDir string, homeDir string) erro
 	}
 
 	srcPath := filepath.Join(homeDir, cf.Source)
-	if _, err := os.Stat(srcPath); os.IsNotExist(err) {
+	info, err := os.Stat(srcPath)
+	if os.IsNotExist(err) {
 		// Gracefully skip missing config files
+		return nil
+	}
+	if err == nil && info.IsDir() {
+		// Skip directories — they should be handled by copyConfigDir
 		return nil
 	}
 

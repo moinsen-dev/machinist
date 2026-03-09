@@ -414,13 +414,13 @@ func TestCollectConfigFiles_SingleStringFields(t *testing.T) {
 		Rectangle:       &domain.RectangleSection{ConfigFile: "Library/Preferences/com.knollsoft.Rectangle.plist"},
 		BetterTouchTool: &domain.BetterTouchToolSection{ConfigFile: "Library/Application Support/BetterTouchTool/btt_data.json"},
 		Raycast:         &domain.RaycastSection{ExportFile: "raycast-export.json"},
-		AITools:         &domain.AIToolsSection{ClaudeCodeConfig: ".claude/settings.json"},
+		// Note: AITools.ClaudeCodeConfig is a directory, handled by collectConfigDirs
 	}
 
 	files := collectConfigFiles(snap)
 
-	// Should have exactly 9 files from single-string fields
-	assert.Len(t, files, 9)
+	// Should have exactly 8 files from single-string fields
+	assert.Len(t, files, 8)
 
 	// Verify each has a proper BundlePath under configs/
 	sources := make(map[string]string)
@@ -432,6 +432,24 @@ func TestCollectConfigFiles_SingleStringFields(t *testing.T) {
 	assert.Equal(t, "configs/aws/config", sources[".aws/config"])
 	assert.Equal(t, "configs/kubernetes/config", sources[".kube/config"])
 	assert.Equal(t, "configs/raycast/raycast-export.json", sources["raycast-export.json"])
+}
+
+func TestCollectConfigFiles_IncludesFonts(t *testing.T) {
+	snap := &domain.Snapshot{
+		Fonts: &domain.FontsSection{
+			CustomFonts: []domain.Font{
+				{Name: "FiraCode-Regular", BundlePath: "Library/Fonts/FiraCode-Regular.ttf"},
+				{Name: "JetBrainsMono", BundlePath: "Library/Fonts/JetBrainsMono.ttf"},
+			},
+		},
+	}
+
+	files := collectConfigFiles(snap)
+	require.Len(t, files, 2)
+	assert.Equal(t, "Library/Fonts/FiraCode-Regular.ttf", files[0].Source)
+	assert.Equal(t, "configs/fonts/FiraCode-Regular.ttf", files[0].BundlePath)
+	assert.Equal(t, "Library/Fonts/JetBrainsMono.ttf", files[1].Source)
+	assert.Equal(t, "configs/fonts/JetBrainsMono.ttf", files[1].BundlePath)
 }
 
 func TestCollectConfigDirs(t *testing.T) {
