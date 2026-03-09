@@ -15,17 +15,17 @@ log "CHECKLIST: Alfred preferences sync"
 log "  1. Open Alfred Preferences"
 log "  2. Go to Advanced > Set preferences folder"
 log "  3. Point to your synced preferences location (Dropbox/iCloud)"
-log "  Config dir: {{.ConfigDir}}"
+log "  Config bundled at: configs/alfred/"
 {{end}}
 {{end}}
 
 {{define "karabiner"}}
 log "Restoring Karabiner-Elements..."
 {{if .ConfigDir}}
-if [ -d "{{.ConfigDir}}" ]; then
+if [ -d "configs/karabiner" ]; then
     log "Restoring Karabiner config directory"
     mkdir -p "$HOME/.config/karabiner"
-    cp -R "{{.ConfigDir}}/" "$HOME/.config/karabiner/"
+    cp -R "configs/karabiner/" "$HOME/.config/karabiner/"
 fi
 {{end}}
 {{end}}
@@ -60,10 +60,10 @@ if ! command -v op &>/dev/null; then
 fi
 
 {{if .ConfigDir}}
-if [ -d "{{.ConfigDir}}" ]; then
+if [ -d "configs/onepassword" ]; then
     log "Restoring 1Password CLI config directory"
     mkdir -p "$HOME/.config/op"
-    cp -R "{{.ConfigDir}}/" "$HOME/.config/op/"
+    cp -R "configs/onepassword/" "$HOME/.config/op/"
 fi
 {{end}}
 log "CHECKLIST: Run 'op signin' to authenticate with 1Password"
@@ -123,16 +123,14 @@ log "CHECKLIST: Run 'mkcert -install' to set up local CA"
 
 {{define "xdg-config"}}
 log "Restoring XDG configs..."
-{{if .ConfigDir}}
-if [ -d "{{.ConfigDir}}" ]; then
-    log "Restoring XDG config directory"
-    mkdir -p "$HOME/.config"
-    cp -R "{{.ConfigDir}}/" "$HOME/.config/"
-fi
-{{end}}
+mkdir -p "$HOME/.config"
 
 {{range .AutoDetected}}
-log "XDG config: {{.}}"
+if [ -d "configs/xdg-config/{{.}}" ]; then
+    log "Restoring XDG config: {{.}}"
+    mkdir -p "$HOME/.config/{{.}}"
+    cp -R "configs/xdg-config/{{.}}/" "$HOME/.config/{{.}}/"
+fi
 {{end}}
 {{end}}
 

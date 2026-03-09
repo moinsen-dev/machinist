@@ -30,10 +30,10 @@ if ! command -v gh &>/dev/null; then
     log "Warning: GitHub CLI is not installed — install via 'brew install gh'"
 else
     {{if .ConfigDir}}
-    if [ -d "{{.ConfigDir}}" ]; then
+    if [ -d "configs/github-cli" ]; then
         log "Restoring GitHub CLI config directory"
         mkdir -p "$HOME/.config/gh"
-        cp -R "{{.ConfigDir}}/" "$HOME/.config/gh/"
+        cp -R "configs/github-cli/" "$HOME/.config/gh/"
     fi
     {{end}}
 

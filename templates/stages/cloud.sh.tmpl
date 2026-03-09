@@ -69,10 +69,10 @@ fi
 {{define "vercel"}}
 log "Restoring Vercel..."
 {{if .ConfigDir}}
-if [ -d "{{.ConfigDir}}" ]; then
+if [ -d "configs/vercel" ]; then
     log "Restoring Vercel config directory"
     mkdir -p "$HOME/.config/com.vercel.cli"
-    cp -R "{{.ConfigDir}}/" "$HOME/.config/com.vercel.cli/"
+    cp -R "configs/vercel/" "$HOME/.config/com.vercel.cli/"
 fi
 {{end}}
 log "CHECKLIST: Run 'vercel login' to authenticate"
@@ -114,10 +114,10 @@ log "CHECKLIST: Run 'fly auth login' to re-authenticate"
 {{define "firebase"}}
 log "Restoring Firebase..."
 {{if .ConfigDir}}
-if [ -d "{{.ConfigDir}}" ]; then
+if [ -d "configs/firebase" ]; then
     log "Restoring Firebase config directory"
     mkdir -p "$HOME/.config/firebase"
-    cp -R "{{.ConfigDir}}/" "$HOME/.config/firebase/"
+    cp -R "configs/firebase/" "$HOME/.config/firebase/"
 fi
 {{end}}
 log "CHECKLIST: Run 'firebase login' to re-authenticate"
@@ -126,10 +126,10 @@ log "CHECKLIST: Run 'firebase login' to re-authenticate"
 {{define "cloudflare"}}
 log "Restoring Cloudflare..."
 {{if .ConfigDir}}
-if [ -d "{{.ConfigDir}}" ]; then
+if [ -d "configs/cloudflare" ]; then
     log "Restoring Cloudflare/Wrangler config directory"
     mkdir -p "$HOME/.config/.wrangler"
-    cp -R "{{.ConfigDir}}/" "$HOME/.config/.wrangler/"
+    cp -R "configs/cloudflare/" "$HOME/.config/.wrangler/"
 fi
 {{end}}
 log "CHECKLIST: Run 'wrangler login' to re-authenticate"

@@ -1,16 +1,16 @@
 {{define "neovim"}}
 log "Restoring Neovim config..."
 {{if .ConfigDir}}
-if [ -d "{{.ConfigDir}}" ]; then
+if [ -d "configs/neovim" ]; then
     log "Restoring Neovim config directory"
     mkdir -p "$HOME/.config/nvim"
-    cp -R "{{.ConfigDir}}/" "$HOME/.config/nvim/"
+    cp -R "configs/neovim/" "$HOME/.config/nvim/"
 fi
 {{end}}
 
 {{if .PluginManager}}
 log "Neovim plugin manager: {{.PluginManager}}"
-log "Plugins will auto-install on first launch of Neovim"
+log "CHECKLIST: Open Neovim and let plugins install"
 {{end}}
 {{end}}
 

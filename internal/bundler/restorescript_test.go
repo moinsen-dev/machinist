@@ -444,6 +444,65 @@ func TestGenerateRestoreScript_ConfigFileBundlePaths(t *testing.T) {
 	assert.Contains(t, script, `configs/bettertouchtool/btt_data.json`)
 }
 
+func TestGenerateRestoreScript_ConfigDirBundlePaths(t *testing.T) {
+	snap := &domain.Snapshot{
+		Meta: newMeta(),
+		GitHubCLI: &domain.GitHubCLISection{
+			ConfigDir: ".config/gh",
+		},
+		Neovim: &domain.NeovimSection{
+			ConfigDir: ".config/nvim",
+		},
+		Vercel: &domain.VercelSection{
+			ConfigDir: ".vercel",
+		},
+		Firebase: &domain.FirebaseSection{
+			ConfigDir: ".config/firebase",
+		},
+		CloudflareWrangler: &domain.CloudflareSection{
+			ConfigDir: ".config/.wrangler",
+		},
+		Karabiner: &domain.KarabinerSection{
+			ConfigDir: ".config/karabiner",
+		},
+		Alfred: &domain.AlfredSection{
+			ConfigDir: "Library/Application Support/Alfred",
+		},
+		OnePassword: &domain.OnePasswordSection{
+			ConfigDir: ".config/op",
+		},
+	}
+
+	script, err := GenerateRestoreScript(snap)
+	require.NoError(t, err)
+
+	assert.Contains(t, script, `"configs/github-cli/"`)
+	assert.Contains(t, script, `"configs/neovim/"`)
+	assert.Contains(t, script, `"configs/vercel/"`)
+	assert.Contains(t, script, `"configs/firebase/"`)
+	assert.Contains(t, script, `"configs/cloudflare/"`)
+	assert.Contains(t, script, `"configs/karabiner/"`)
+	assert.Contains(t, script, `configs/alfred/`)
+	assert.Contains(t, script, `"configs/onepassword/"`)
+}
+
+func TestGenerateRestoreScript_XDGConfigRestoresToolDirs(t *testing.T) {
+	snap := &domain.Snapshot{
+		Meta: newMeta(),
+		XDGConfig: &domain.XDGConfigSection{
+			AutoDetected: []string{"bat", "lazygit", "starship"},
+		},
+	}
+
+	script, err := GenerateRestoreScript(snap)
+	require.NoError(t, err)
+
+	assert.Contains(t, script, `configs/xdg-config/bat`)
+	assert.Contains(t, script, `cp -R "configs/xdg-config/bat/" "$HOME/.config/bat/"`)
+	assert.Contains(t, script, `cp -R "configs/xdg-config/lazygit/" "$HOME/.config/lazygit/"`)
+	assert.Contains(t, script, `cp -R "configs/xdg-config/starship/" "$HOME/.config/starship/"`)
+}
+
 func TestGenerateRestoreScript_StageCountMatchesSections(t *testing.T) {
 	// 0 sections = 0 stages
 	snap0 := &domain.Snapshot{Meta: newMeta()}
