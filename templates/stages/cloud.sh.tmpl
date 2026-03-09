@@ -1,10 +1,10 @@
 {{define "docker"}}
 log "Restoring Docker..."
 {{if .ConfigFile}}
-if [ -f "{{.ConfigFile}}" ]; then
+if [ -f "configs/docker/{{base .ConfigFile}}" ]; then
     log "Restoring Docker config"
     mkdir -p "$HOME/.docker"
-    cp "{{.ConfigFile}}" "$HOME/.docker/config.json"
+    cp "configs/docker/{{base .ConfigFile}}" "$HOME/.docker/config.json"
 fi
 {{end}}
 
@@ -21,10 +21,10 @@ docker pull "{{.}}" || true
 {{define "aws"}}
 log "Restoring AWS CLI..."
 {{if .ConfigFile}}
-if [ -f "{{.ConfigFile}}" ]; then
+if [ -f "configs/aws/{{base .ConfigFile}}" ]; then
     log "Restoring AWS config"
     mkdir -p "$HOME/.aws"
-    cp "{{.ConfigFile}}" "$HOME/.aws/config"
+    cp "configs/aws/{{base .ConfigFile}}" "$HOME/.aws/config"
     chmod 600 "$HOME/.aws/config"
 fi
 {{end}}
@@ -40,10 +40,10 @@ log "  - {{.}} (run: aws configure --profile {{.}})"
 {{define "kubernetes"}}
 log "Restoring Kubernetes..."
 {{if .ConfigFile}}
-if [ -f "{{.ConfigFile}}" ]; then
+if [ -f "configs/kubernetes/{{base .ConfigFile}}" ]; then
     log "Restoring kubeconfig"
     mkdir -p "$HOME/.kube"
-    cp "{{.ConfigFile}}" "$HOME/.kube/config"
+    cp "configs/kubernetes/{{base .ConfigFile}}" "$HOME/.kube/config"
     chmod 600 "$HOME/.kube/config"
 fi
 {{end}}
@@ -59,9 +59,9 @@ log "  - {{.}}"
 {{define "terraform"}}
 log "Restoring Terraform..."
 {{if .ConfigFile}}
-if [ -f "{{.ConfigFile}}" ]; then
+if [ -f "configs/terraform/{{base .ConfigFile}}" ]; then
     log "Restoring Terraform CLI config"
-    cp "{{.ConfigFile}}" "$HOME/.terraformrc"
+    cp "configs/terraform/{{base .ConfigFile}}" "$HOME/.terraformrc"
 fi
 {{end}}
 {{end}}
@@ -102,10 +102,10 @@ log "  3. Set subscription: az account set --subscription <SUB_ID>"
 {{define "flyio"}}
 log "Restoring Fly.io..."
 {{if .ConfigFile}}
-if [ -f "{{.ConfigFile}}" ]; then
+if [ -f "configs/flyio/{{base .ConfigFile}}" ]; then
     log "Restoring Fly.io config"
     mkdir -p "$HOME/.fly"
-    cp "{{.ConfigFile}}" "$HOME/.fly/config.yml"
+    cp "configs/flyio/{{base .ConfigFile}}" "$HOME/.fly/config.yml"
 fi
 {{end}}
 log "CHECKLIST: Run 'fly auth login' to re-authenticate"

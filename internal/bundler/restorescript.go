@@ -3,6 +3,7 @@ package bundler
 import (
 	"bytes"
 	"fmt"
+	"path/filepath"
 	"text/template"
 
 	machinist "github.com/moinsen-dev/machinist"
@@ -12,7 +13,10 @@ import (
 // GenerateRestoreScript renders the restore shell script from a Snapshot
 // using the embedded templates.
 func GenerateRestoreScript(snapshot *domain.Snapshot) (string, error) {
-	tmpl, err := template.ParseFS(machinist.TemplateFS, "templates/*.tmpl", "templates/stages/*.tmpl")
+	funcMap := template.FuncMap{
+		"base": filepath.Base,
+	}
+	tmpl, err := template.New("").Funcs(funcMap).ParseFS(machinist.TemplateFS, "templates/*.tmpl", "templates/stages/*.tmpl")
 	if err != nil {
 		return "", fmt.Errorf("parse templates: %w", err)
 	}

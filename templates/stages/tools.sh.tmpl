@@ -4,7 +4,7 @@ log "Restoring Raycast..."
 log "CHECKLIST: Raycast configuration export available"
 log "  1. Open Raycast"
 log "  2. Go to Settings > Advanced > Import"
-log "  3. Import from: {{.ExportFile}}"
+log "  3. Import from: configs/raycast/{{base .ExportFile}}"
 {{end}}
 {{end}}
 
@@ -33,9 +33,9 @@ fi
 {{define "rectangle"}}
 log "Restoring Rectangle..."
 {{if .ConfigFile}}
-if [ -f "{{.ConfigFile}}" ]; then
+if [ -f "configs/rectangle/{{base .ConfigFile}}" ]; then
     log "Restoring Rectangle preferences"
-    cp "{{.ConfigFile}}" "$HOME/Library/Preferences/com.knollsoft.Rectangle.plist"
+    cp "configs/rectangle/{{base .ConfigFile}}" "$HOME/Library/Preferences/com.knollsoft.Rectangle.plist"
     defaults read com.knollsoft.Rectangle &>/dev/null || true
 fi
 {{end}}
@@ -47,7 +47,7 @@ log "Restoring BetterTouchTool..."
 log "CHECKLIST: BetterTouchTool configuration"
 log "  1. Open BetterTouchTool"
 log "  2. Go to Preferences > Manage Presets"
-log "  3. Import from: {{.ConfigFile}}"
+log "  3. Import from: configs/bettertouchtool/{{base .ConfigFile}}"
 {{end}}
 {{end}}
 
@@ -85,10 +85,10 @@ log "{{.ExtensionsChecklist}}"
 {{define "ai-tools"}}
 log "Restoring AI tools..."
 {{if .ClaudeCodeConfig}}
-if [ -f "{{.ClaudeCodeConfig}}" ]; then
+if [ -f "configs/ai-tools/{{base .ClaudeCodeConfig}}" ]; then
     log "Restoring Claude Code config"
-    mkdir -p "$HOME/.config/claude"
-    cp "{{.ClaudeCodeConfig}}" "$HOME/.config/claude/"
+    mkdir -p "$HOME/.claude"
+    cp "configs/ai-tools/{{base .ClaudeCodeConfig}}" "$HOME/.claude/{{base .ClaudeCodeConfig}}"
 fi
 {{end}}
 

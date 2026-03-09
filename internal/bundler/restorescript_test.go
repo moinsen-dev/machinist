@@ -405,6 +405,45 @@ func TestGenerateRestoreScript_SSHConfigBundlePaths(t *testing.T) {
 	assert.Contains(t, script, `cp "configs/ssh/known_hosts" "$HOME/.ssh/known_hosts"`)
 }
 
+func TestGenerateRestoreScript_ConfigFileBundlePaths(t *testing.T) {
+	snap := &domain.Snapshot{
+		Meta: newMeta(),
+		Docker: &domain.DockerSection{
+			ConfigFile: ".docker/config.json",
+		},
+		AWS: &domain.AWSSection{
+			ConfigFile: ".aws/config",
+		},
+		Kubernetes: &domain.KubernetesSection{
+			ConfigFile: ".kube/config",
+		},
+		Terraform: &domain.TerraformSection{
+			ConfigFile: ".terraformrc",
+		},
+		Flyio: &domain.FlyioSection{
+			ConfigFile: ".fly/config.yml",
+		},
+		Rectangle: &domain.RectangleSection{
+			ConfigFile: "Library/Preferences/com.knollsoft.Rectangle.plist",
+		},
+		BetterTouchTool: &domain.BetterTouchToolSection{
+			ConfigFile: "Library/Application Support/BetterTouchTool/btt_data.json",
+		},
+	}
+
+	script, err := GenerateRestoreScript(snap)
+	require.NoError(t, err)
+
+	// Each template must use configs/<prefix>/basename, not the raw source path
+	assert.Contains(t, script, `"configs/docker/config.json"`)
+	assert.Contains(t, script, `"configs/aws/config"`)
+	assert.Contains(t, script, `"configs/kubernetes/config"`)
+	assert.Contains(t, script, `"configs/terraform/.terraformrc"`)
+	assert.Contains(t, script, `"configs/flyio/config.yml"`)
+	assert.Contains(t, script, `"configs/rectangle/com.knollsoft.Rectangle.plist"`)
+	assert.Contains(t, script, `configs/bettertouchtool/btt_data.json`)
+}
+
 func TestGenerateRestoreScript_StageCountMatchesSections(t *testing.T) {
 	// 0 sections = 0 stages
 	snap0 := &domain.Snapshot{Meta: newMeta()}
