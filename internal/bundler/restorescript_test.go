@@ -331,6 +331,45 @@ func TestGenerateRestoreScript_HomebrewPATHInit(t *testing.T) {
 	assert.Contains(t, script, `/usr/local/bin/brew shellenv`)
 }
 
+func TestGenerateRestoreScript_SSHBeforeGitRepos(t *testing.T) {
+	snap := &domain.Snapshot{
+		Meta: newMeta(),
+		SSH: &domain.SSHSection{
+			Keys: []string{"id_ed25519"},
+		},
+		GPG: &domain.GPGSection{
+			Keys: []string{"ABC123"},
+		},
+		Git: &domain.GitSection{
+			ConfigFiles: []domain.ConfigFile{
+				{Source: ".gitconfig", BundlePath: "configs/.gitconfig"},
+			},
+		},
+		GitRepos: &domain.GitReposSection{
+			Repositories: []domain.Repository{
+				{Remote: "git@github.com:user/repo.git", Path: "~/work/repo"},
+			},
+		},
+	}
+
+	script, err := GenerateRestoreScript(snap)
+	require.NoError(t, err)
+
+	sshIdx := strings.Index(script, `run_stage "SSH Keys"`)
+	gpgIdx := strings.Index(script, `run_stage "GPG Keys"`)
+	gitCfgIdx := strings.Index(script, `run_stage "Git Configuration"`)
+	gitReposIdx := strings.Index(script, `run_stage "Git Repositories"`)
+
+	require.Greater(t, sshIdx, 0, "SSH stage not found")
+	require.Greater(t, gpgIdx, 0, "GPG stage not found")
+	require.Greater(t, gitCfgIdx, 0, "Git Config stage not found")
+	require.Greater(t, gitReposIdx, 0, "Git Repos stage not found")
+
+	assert.Less(t, sshIdx, gitReposIdx, "SSH must come before Git Repos")
+	assert.Less(t, gpgIdx, gitReposIdx, "GPG must come before Git Repos")
+	assert.Less(t, gitCfgIdx, gitReposIdx, "Git Config must come before Git Repos")
+}
+
 func TestGenerateRestoreScript_StageCountMatchesSections(t *testing.T) {
 	// 0 sections = 0 stages
 	snap0 := &domain.Snapshot{Meta: newMeta()}
