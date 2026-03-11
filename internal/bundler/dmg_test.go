@@ -546,6 +546,36 @@ func TestPrepareBundleDir_CopiesSingleStringConfigFiles(t *testing.T) {
 	assert.Equal(t, `{"auths":{}}`, string(content))
 }
 
+func TestPrepareBundleDir_WritesGroupScripts(t *testing.T) {
+	snap := &domain.Snapshot{
+		Meta:     newMeta(),
+		Homebrew: &domain.HomebrewSection{Formulae: []domain.Package{{Name: "git"}}},
+		Shell:    &domain.ShellSection{DefaultShell: "/bin/zsh"},
+	}
+
+	outputDir := t.TempDir()
+	err := PrepareBundleDir(snap, outputDir, t.TempDir(), "")
+	require.NoError(t, err)
+
+	// Orchestrator must exist
+	_, err = os.Stat(filepath.Join(outputDir, "install.command"))
+	assert.NoError(t, err)
+
+	// Group scripts for groups with data
+	_, err = os.Stat(filepath.Join(outputDir, "01-foundation.sh"))
+	assert.NoError(t, err)
+	_, err = os.Stat(filepath.Join(outputDir, "02-shell.sh"))
+	assert.NoError(t, err)
+
+	// Groups without data must NOT be written
+	_, err = os.Stat(filepath.Join(outputDir, "03-runtimes.sh"))
+	assert.True(t, os.IsNotExist(err))
+
+	// Scripts must be executable
+	info, _ := os.Stat(filepath.Join(outputDir, "01-foundation.sh"))
+	assert.True(t, info.Mode()&0111 != 0)
+}
+
 func TestPrepareBundleDir_CopiesConfigDirs(t *testing.T) {
 	configSourceDir := t.TempDir()
 
