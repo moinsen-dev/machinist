@@ -164,6 +164,51 @@ default_shell = "/bin/zsh"
 	}
 }
 
+func TestRestore_UnknownGroupName(t *testing.T) {
+	resetRestoreFlags()
+	dir := t.TempDir()
+	manifest := filepath.Join(dir, "manifest.toml")
+	content := `[meta]
+source_hostname = "test-mac"
+source_arch = "arm64"
+snapshot_date = "2025-01-01"
+machinist_version = "0.1.0"
+
+[homebrew]
+taps = []
+formulae = []
+casks = []
+`
+	if err := os.WriteFile(manifest, []byte(content), 0644); err != nil {
+		t.Fatalf("write test manifest: %v", err)
+	}
+
+	// Test --only with unknown group
+	_, err := executeCommand("restore", manifest, "--dry-run", "--only", "bogus,shell")
+	if err == nil {
+		t.Fatal("expected error for unknown group name, got nil")
+	}
+	if !strings.Contains(err.Error(), "unknown group(s)") {
+		t.Errorf("expected error to contain 'unknown group(s)', got: %s", err.Error())
+	}
+	if !strings.Contains(err.Error(), "bogus") {
+		t.Errorf("expected error to mention 'bogus', got: %s", err.Error())
+	}
+
+	// Test --skip with unknown group
+	resetRestoreFlags()
+	_, err = executeCommand("restore", manifest, "--dry-run", "--skip", "nope")
+	if err == nil {
+		t.Fatal("expected error for unknown group name in --skip, got nil")
+	}
+	if !strings.Contains(err.Error(), "unknown group(s)") {
+		t.Errorf("expected error to contain 'unknown group(s)', got: %s", err.Error())
+	}
+	if !strings.Contains(err.Error(), "nope") {
+		t.Errorf("expected error to mention 'nope', got: %s", err.Error())
+	}
+}
+
 func TestRestoreDryRunWithSkip(t *testing.T) {
 	resetRestoreFlags()
 	dir := t.TempDir()

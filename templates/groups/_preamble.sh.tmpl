@@ -13,8 +13,6 @@ STAGE_NUM=0
 STAGE_TOTAL={{.StageCount}}
 STAGE_PASS=0
 STAGE_FAIL=0
-STAGE_SKIP=0
-
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOGFILE"; }
 
 stage() {
@@ -53,7 +51,6 @@ log ""
 log "{{.GroupLabel}} restore completed in ${ELAPSED}s"
 log "  Passed: $STAGE_PASS stages succeeded"
 log "  Failed: $STAGE_FAIL stages failed"
-log "  Skipped: $STAGE_SKIP stages skipped"
 echo ""
 echo "Check $LOGFILE for details."
 if [ $STAGE_FAIL -gt 0 ]; then exit 1; fi

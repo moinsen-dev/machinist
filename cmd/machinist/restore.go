@@ -53,6 +53,19 @@ var restoreCmd = &cobra.Command{
 
 		if restoreOnly != "" {
 			only := parseCSV(restoreOnly)
+			validNames := make(map[string]bool)
+			for _, n := range domain.GroupNames() {
+				validNames[n] = true
+			}
+			var unknown []string
+			for _, n := range only {
+				if !validNames[n] {
+					unknown = append(unknown, n)
+				}
+			}
+			if len(unknown) > 0 {
+				return fmt.Errorf("unknown group(s): %s (valid: %s)", strings.Join(unknown, ", "), strings.Join(domain.GroupNames(), ", "))
+			}
 			onlySet := make(map[string]bool, len(only))
 			for _, name := range only {
 				onlySet[name] = true
@@ -64,6 +77,19 @@ var restoreCmd = &cobra.Command{
 			}
 		} else if restoreSkip != "" {
 			skip := parseCSV(restoreSkip)
+			validNames := make(map[string]bool)
+			for _, n := range domain.GroupNames() {
+				validNames[n] = true
+			}
+			var unknown []string
+			for _, n := range skip {
+				if !validNames[n] {
+					unknown = append(unknown, n)
+				}
+			}
+			if len(unknown) > 0 {
+				return fmt.Errorf("unknown group(s): %s (valid: %s)", strings.Join(unknown, ", "), strings.Join(domain.GroupNames(), ", "))
+			}
 			skipSet := make(map[string]bool, len(skip))
 			for _, name := range skip {
 				skipSet[name] = true

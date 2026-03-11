@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -51,6 +52,18 @@ func TestGroupNames(t *testing.T) {
 	}
 	if names[0] != "foundation" {
 		t.Errorf("first name = %q, want 'foundation'", names[0])
+	}
+}
+
+func TestRestoreGroups_SnapshotFieldsAreValid(t *testing.T) {
+	snapType := reflect.TypeOf(Snapshot{})
+	for _, g := range RestoreGroups() {
+		for _, fieldName := range g.SnapshotFields {
+			_, ok := snapType.FieldByName(fieldName)
+			if !ok {
+				t.Errorf("group %s references non-existent Snapshot field: %s", g.ID, fieldName)
+			}
+		}
 	}
 }
 
