@@ -1,0 +1,73 @@
+{{template "preamble" .}}
+
+{{if .Node}}
+do_node() {
+{{template "node" .Node}}
+}
+run_stage "Node.js" do_node
+{{end}}
+
+{{if .Python}}
+do_python() {
+{{template "python" .Python}}
+}
+run_stage "Python" do_python
+{{end}}
+
+{{if .Rust}}
+do_rust() {
+{{template "rust" .Rust}}
+}
+run_stage "Rust" do_rust
+{{end}}
+
+{{if .Flutter}}
+do_flutter() {
+{{template "flutter" .Flutter}}
+}
+run_stage "Flutter" do_flutter
+{{end}}
+
+{{if .Go}}
+do_go() {
+{{template "go-runtime" .Go}}
+}
+run_stage "Go" do_go
+{{end}}
+
+{{if .Ruby}}
+do_ruby() {
+{{template "ruby" .Ruby}}
+}
+run_stage "Ruby" do_ruby
+{{end}}
+
+{{if .Java}}
+do_java() {
+{{template "java" .Java}}
+}
+run_stage "Java/SDKMAN" do_java
+{{end}}
+
+{{if .Deno}}
+do_deno() {
+{{template "deno" .Deno}}
+}
+run_stage "Deno" do_deno
+{{end}}
+
+{{if .Bun}}
+do_bun() {
+{{template "bun" .Bun}}
+}
+run_stage "Bun" do_bun
+{{end}}
+
+{{if .Asdf}}
+do_asdf() {
+{{template "asdf" .Asdf}}
+}
+run_stage "asdf/mise" do_asdf
+{{end}}
+
+{{template "summary" .}}

@@ -1,0 +1,38 @@
+{{template "preamble" .}}
+
+{{if .Homebrew}}
+do_homebrew() {
+{{template "homebrew" .Homebrew}}
+}
+run_stage "Homebrew" do_homebrew
+{{end}}
+
+{{if .SSH}}
+do_ssh() {
+{{template "ssh" .SSH}}
+}
+run_stage "SSH Keys" do_ssh
+{{end}}
+
+{{if .GPG}}
+do_gpg() {
+{{template "gpg" .GPG}}
+}
+run_stage "GPG Keys" do_gpg
+{{end}}
+
+{{if .Git}}
+do_git_config() {
+{{template "git-config" .Git}}
+}
+run_stage "Git Configuration" do_git_config
+{{end}}
+
+{{if .GitHubCLI}}
+do_github_cli() {
+{{template "github-cli" .GitHubCLI}}
+}
+run_stage "GitHub CLI" do_github_cli
+{{end}}
+
+{{template "summary" .}}

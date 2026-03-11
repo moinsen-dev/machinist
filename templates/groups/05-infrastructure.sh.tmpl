@@ -1,0 +1,73 @@
+{{template "preamble" .}}
+
+{{if .Docker}}
+do_docker() {
+{{template "docker" .Docker}}
+}
+run_stage "Docker" do_docker
+{{end}}
+
+{{if .Kubernetes}}
+do_kubernetes() {
+{{template "kubernetes" .Kubernetes}}
+}
+run_stage "Kubernetes" do_kubernetes
+{{end}}
+
+{{if .GCP}}
+do_gcp() {
+{{template "gcp" .GCP}}
+}
+run_stage "Google Cloud" do_gcp
+{{end}}
+
+{{if .AWS}}
+do_aws() {
+{{template "aws" .AWS}}
+}
+run_stage "AWS CLI" do_aws
+{{end}}
+
+{{if .Azure}}
+do_azure() {
+{{template "azure" .Azure}}
+}
+run_stage "Azure" do_azure
+{{end}}
+
+{{if .Terraform}}
+do_terraform() {
+{{template "terraform" .Terraform}}
+}
+run_stage "Terraform" do_terraform
+{{end}}
+
+{{if .Firebase}}
+do_firebase() {
+{{template "firebase" .Firebase}}
+}
+run_stage "Firebase" do_firebase
+{{end}}
+
+{{if .CloudflareWrangler}}
+do_cloudflare() {
+{{template "cloudflare" .CloudflareWrangler}}
+}
+run_stage "Cloudflare" do_cloudflare
+{{end}}
+
+{{if .Vercel}}
+do_vercel() {
+{{template "vercel" .Vercel}}
+}
+run_stage "Vercel" do_vercel
+{{end}}
+
+{{if .Flyio}}
+do_flyio() {
+{{template "flyio" .Flyio}}
+}
+run_stage "Fly.io" do_flyio
+{{end}}
+
+{{template "summary" .}}

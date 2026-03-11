@@ -1,0 +1,38 @@
+{{template "preamble" .}}
+
+{{if .VSCode}}
+do_vscode() {
+{{template "vscode" .VSCode}}
+}
+run_stage "Visual Studio Code" do_vscode
+{{end}}
+
+{{if .Cursor}}
+do_cursor() {
+{{template "cursor" .Cursor}}
+}
+run_stage "Cursor" do_cursor
+{{end}}
+
+{{if .Xcode}}
+do_xcode() {
+{{template "xcode" .Xcode}}
+}
+run_stage "Xcode" do_xcode
+{{end}}
+
+{{if .JetBrains}}
+do_jetbrains() {
+{{template "jetbrains" .JetBrains}}
+}
+run_stage "JetBrains IDEs" do_jetbrains
+{{end}}
+
+{{if .Neovim}}
+do_neovim() {
+{{template "neovim" .Neovim}}
+}
+run_stage "Neovim" do_neovim
+{{end}}
+
+{{template "summary" .}}

@@ -521,3 +521,127 @@ func TestGenerateRestoreScript_StageCountMatchesSections(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, script3, "STAGE_TOTAL=3")
 }
+
+// ── GenerateRestoreScripts (plural) tests ────────────────────────
+
+func TestGenerateRestoreScripts_ReturnsMapOfScripts(t *testing.T) {
+	snap := &domain.Snapshot{
+		Meta: newMeta(),
+		Homebrew: &domain.HomebrewSection{
+			Formulae: []domain.Package{{Name: "git"}},
+		},
+		Shell: &domain.ShellSection{
+			DefaultShell: "/bin/zsh",
+		},
+		Node: &domain.NodeSection{
+			Versions: []string{"20.0.0"},
+		},
+	}
+
+	scripts, err := GenerateRestoreScripts(snap)
+	require.NoError(t, err)
+
+	// Should contain orchestrator and groups with data
+	assert.Contains(t, scripts, "install.command")
+	assert.Contains(t, scripts, "01-foundation.sh")
+	assert.Contains(t, scripts, "02-shell.sh")
+	assert.Contains(t, scripts, "03-runtimes.sh")
+
+	// Should NOT contain groups without data
+	assert.NotContains(t, scripts, "04-editors.sh")
+	assert.NotContains(t, scripts, "05-infrastructure.sh")
+	assert.NotContains(t, scripts, "06-repos.sh")
+	assert.NotContains(t, scripts, "07-system.sh")
+}
+
+func TestGenerateRestoreScripts_GroupScriptIsStandalone(t *testing.T) {
+	snap := &domain.Snapshot{
+		Meta: newMeta(),
+		Homebrew: &domain.HomebrewSection{
+			Formulae: []domain.Package{{Name: "git"}},
+		},
+	}
+
+	scripts, err := GenerateRestoreScripts(snap)
+	require.NoError(t, err)
+
+	foundation := scripts["01-foundation.sh"]
+	require.NotEmpty(t, foundation)
+
+	assert.Contains(t, foundation, "#!/bin/bash")
+	assert.Contains(t, foundation, "LOGFILE=")
+	assert.Contains(t, foundation, `run_stage "Homebrew"`)
+	assert.Contains(t, foundation, "brew install git")
+}
+
+func TestGenerateRestoreScripts_OrchestratorRunsGroupsInOrder(t *testing.T) {
+	snap := &domain.Snapshot{
+		Meta: newMeta(),
+		Homebrew: &domain.HomebrewSection{
+			Formulae: []domain.Package{{Name: "git"}},
+		},
+		Shell: &domain.ShellSection{
+			DefaultShell: "/bin/zsh",
+		},
+		Node: &domain.NodeSection{
+			Versions: []string{"20.0.0"},
+		},
+	}
+
+	scripts, err := GenerateRestoreScripts(snap)
+	require.NoError(t, err)
+
+	orch := scripts["install.command"]
+	require.NotEmpty(t, orch)
+
+	// All three scripts mentioned in order
+	idx1 := strings.Index(orch, "01-foundation.sh")
+	idx2 := strings.Index(orch, "02-shell.sh")
+	idx3 := strings.Index(orch, "03-runtimes.sh")
+
+	require.Greater(t, idx1, 0, "01-foundation.sh not found in orchestrator")
+	require.Greater(t, idx2, 0, "02-shell.sh not found in orchestrator")
+	require.Greater(t, idx3, 0, "03-runtimes.sh not found in orchestrator")
+
+	assert.Less(t, idx1, idx2, "01-foundation must come before 02-shell")
+	assert.Less(t, idx2, idx3, "02-shell must come before 03-runtimes")
+}
+
+func TestGenerateRestoreScripts_EmptySnapshot(t *testing.T) {
+	snap := &domain.Snapshot{
+		Meta: newMeta(),
+	}
+
+	scripts, err := GenerateRestoreScripts(snap)
+	require.NoError(t, err)
+
+	// Only the orchestrator should be returned
+	assert.Len(t, scripts, 1)
+	assert.Contains(t, scripts, "install.command")
+}
+
+func TestGenerateRestoreScripts_GroupStageCount(t *testing.T) {
+	snap := &domain.Snapshot{
+		Meta: newMeta(),
+		Homebrew: &domain.HomebrewSection{
+			Formulae: []domain.Package{{Name: "git"}},
+		},
+		SSH: &domain.SSHSection{
+			Keys: []string{"id_ed25519"},
+		},
+		Git: &domain.GitSection{
+			ConfigFiles: []domain.ConfigFile{
+				{Source: ".gitconfig", BundlePath: "configs/.gitconfig"},
+			},
+		},
+	}
+
+	scripts, err := GenerateRestoreScripts(snap)
+	require.NoError(t, err)
+
+	foundation := scripts["01-foundation.sh"]
+	require.NotEmpty(t, foundation)
+
+	// Foundation has Homebrew + SSH + Git = 3 stages (GPG is nil)
+	assert.Contains(t, foundation, "STAGE_TOTAL=3")
+}

@@ -36,14 +36,16 @@ func PrepareBundleDir(snapshot *domain.Snapshot, outputDir string, configSourceD
 		return fmt.Errorf("write manifest: %w", err)
 	}
 
-	// Generate and write install.command
-	script, err := GenerateRestoreScript(snapshot)
+	// Generate and write split restore scripts
+	scripts, err := GenerateRestoreScripts(snapshot)
 	if err != nil {
-		return fmt.Errorf("generate restore script: %w", err)
+		return fmt.Errorf("generate restore scripts: %w", err)
 	}
-	installPath := filepath.Join(outputDir, "install.command")
-	if err := os.WriteFile(installPath, []byte(script), 0755); err != nil {
-		return fmt.Errorf("write install.command: %w", err)
+	for filename, content := range scripts {
+		path := filepath.Join(outputDir, filename)
+		if err := os.WriteFile(path, []byte(content), 0755); err != nil {
+			return fmt.Errorf("write %s: %w", filename, err)
+		}
 	}
 
 	// Generate and write README.md
