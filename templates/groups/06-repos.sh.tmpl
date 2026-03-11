@@ -1,0 +1,10 @@
+{{template "preamble" .}}
+
+{{if .GitRepos}}
+do_git_repos() {
+{{template "git-repos" .GitRepos}}
+}
+run_stage "Git Repositories" do_git_repos
+{{end}}
+
+{{template "summary" .}}

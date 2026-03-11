@@ -1,0 +1,60 @@
+{{define "preamble"}}#!/bin/bash
+set -uo pipefail
+
+cd "$(dirname "$0")"
+
+# machinist restore: {{.GroupLabel}}
+# Generated: {{.Meta.CreatedAt}}
+# Source: {{.Meta.SourceHostname}} ({{.Meta.SourceOSVersion}}, {{.Meta.SourceArch}})
+
+LOGFILE="$HOME/.machinist/restore-{{.GroupID}}.log"
+mkdir -p "$(dirname "$LOGFILE")"
+STAGE_NUM=0
+STAGE_TOTAL={{.StageCount}}
+STAGE_PASS=0
+STAGE_FAIL=0
+STAGE_SKIP=0
+
+log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOGFILE"; }
+
+stage() {
+    STAGE_NUM=$((STAGE_NUM + 1))
+    log "[$STAGE_NUM/$STAGE_TOTAL] === $1 ==="
+}
+
+run_stage() {
+    local name="$1"
+    shift
+    stage "$name"
+    if "$@"; then
+        STAGE_PASS=$((STAGE_PASS + 1))
+        log "  -> $name completed"
+    else
+        STAGE_FAIL=$((STAGE_FAIL + 1))
+        log "  !! $name failed (continuing)"
+    fi
+}
+
+CURRENT_ARCH=$(uname -m)
+SOURCE_ARCH="{{.Meta.SourceArch}}"
+if [ "$CURRENT_ARCH" != "$SOURCE_ARCH" ] && [ -n "$SOURCE_ARCH" ]; then
+    log "WARNING: Architecture mismatch: snapshot from $SOURCE_ARCH, running on $CURRENT_ARCH"
+    log "  Some packages may need Rosetta 2 or different versions"
+fi
+
+START_TIME=$(date +%s)
+log "{{.GroupLabel}} restore started"
+{{end}}
+
+{{define "summary"}}
+END_TIME=$(date +%s)
+ELAPSED=$((END_TIME - START_TIME))
+log ""
+log "{{.GroupLabel}} restore completed in ${ELAPSED}s"
+log "  Passed: $STAGE_PASS stages succeeded"
+log "  Failed: $STAGE_FAIL stages failed"
+log "  Skipped: $STAGE_SKIP stages skipped"
+echo ""
+echo "Check $LOGFILE for details."
+if [ $STAGE_FAIL -gt 0 ]; then exit 1; fi
+{{end}}

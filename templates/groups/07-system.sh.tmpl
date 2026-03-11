@@ -1,0 +1,157 @@
+{{template "preamble" .}}
+
+{{if .MacOSDefaults}}
+do_macos_defaults() {
+{{template "macos-defaults" .MacOSDefaults}}
+}
+run_stage "macOS Defaults" do_macos_defaults
+{{end}}
+
+{{if .Apps}}
+do_apps() {
+{{template "apps" .Apps}}
+}
+run_stage "Mac App Store Apps" do_apps
+{{end}}
+
+{{if .Fonts}}
+do_fonts() {
+{{template "fonts" .Fonts}}
+}
+run_stage "Fonts" do_fonts
+{{end}}
+
+{{if .Folders}}
+do_folders() {
+{{template "folders" .Folders}}
+}
+run_stage "Folder Structure" do_folders
+{{end}}
+
+{{if or .Crontab .LaunchAgents}}
+do_scheduled() {
+{{template "scheduled" .Snapshot}}
+}
+run_stage "Scheduled Tasks" do_scheduled
+{{end}}
+
+{{if .Locale}}
+do_locale() {
+{{template "locale" .Locale}}
+}
+run_stage "Locale & Timezone" do_locale
+{{end}}
+
+{{if .LoginItems}}
+do_login_items() {
+{{template "login-items" .LoginItems}}
+}
+run_stage "Login Items" do_login_items
+{{end}}
+
+{{if .HostsFile}}
+do_hosts_file() {
+{{template "hosts-file" .HostsFile}}
+}
+run_stage "Hosts File" do_hosts_file
+{{end}}
+
+{{if .Network}}
+do_network() {
+{{template "network" .Network}}
+}
+run_stage "Network" do_network
+{{end}}
+
+{{if .Raycast}}
+do_raycast() {
+{{template "raycast" .Raycast}}
+}
+run_stage "Raycast" do_raycast
+{{end}}
+
+{{if .Alfred}}
+do_alfred() {
+{{template "alfred" .Alfred}}
+}
+run_stage "Alfred" do_alfred
+{{end}}
+
+{{if .Karabiner}}
+do_karabiner() {
+{{template "karabiner" .Karabiner}}
+}
+run_stage "Karabiner-Elements" do_karabiner
+{{end}}
+
+{{if .Rectangle}}
+do_rectangle() {
+{{template "rectangle" .Rectangle}}
+}
+run_stage "Rectangle" do_rectangle
+{{end}}
+
+{{if .BetterTouchTool}}
+do_bettertouchtool() {
+{{template "bettertouchtool" .BetterTouchTool}}
+}
+run_stage "BetterTouchTool" do_bettertouchtool
+{{end}}
+
+{{if .OnePassword}}
+do_onepassword() {
+{{template "onepassword" .OnePassword}}
+}
+run_stage "1Password CLI" do_onepassword
+{{end}}
+
+{{if .Browser}}
+do_browser() {
+{{template "browser" .Browser}}
+}
+run_stage "Browser" do_browser
+{{end}}
+
+{{if .AITools}}
+do_ai_tools() {
+{{template "ai-tools" .AITools}}
+}
+run_stage "AI Tools" do_ai_tools
+{{end}}
+
+{{if .APITools}}
+do_api_tools() {
+{{template "api-tools" .APITools}}
+}
+run_stage "API Tools" do_api_tools
+{{end}}
+
+{{if .XDGConfig}}
+do_xdg_config() {
+{{template "xdg-config" .XDGConfig}}
+}
+run_stage "XDG Config" do_xdg_config
+{{end}}
+
+{{if .EnvFiles}}
+do_env_files() {
+{{template "env-files" .EnvFiles}}
+}
+run_stage "Environment Files" do_env_files
+{{end}}
+
+{{if .Databases}}
+do_databases() {
+{{template "databases" .Databases}}
+}
+run_stage "Database Clients" do_databases
+{{end}}
+
+{{if .Registries}}
+do_registries() {
+{{template "registries" .Registries}}
+}
+run_stage "Package Registries" do_registries
+{{end}}
+
+{{template "summary" .}}
