@@ -2,3 +2,4 @@
 machinist-snapshot.toml
 *.out
 dist/
+.worktrees/
