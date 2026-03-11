@@ -94,6 +94,7 @@ func TestFontsScanner_Scan_Combined(t *testing.T) {
 
 	assert.Len(t, result.Fonts.CustomFonts, 1)
 	assert.Equal(t, "Roboto", result.Fonts.CustomFonts[0].Name)
+	assert.Equal(t, filepath.Join("Library", "Fonts", "Roboto.ttf"), result.Fonts.CustomFonts[0].BundlePath)
 	assert.Equal(t, []string{"font-fira-code"}, result.Fonts.HomebrewFonts)
 }
 

@@ -98,9 +98,10 @@ func (s *EnvFilesScanner) walkForEnvFiles(dir string, currentDepth, maxDepth int
 		// Check if this is an env file we care about
 		if envFileNames[name] {
 			fullPath := filepath.Join(dir, name)
+			relPath := strings.TrimPrefix(fullPath, s.homeDir+"/")
 			files = append(files, domain.EnvFile{
-				Source:     fullPath,
-				BundlePath: filepath.Join("env_files", strings.TrimPrefix(fullPath, s.homeDir+"/")),
+				Source:     relPath,
+				BundlePath: filepath.Join("env_files", relPath),
 			})
 		}
 	}

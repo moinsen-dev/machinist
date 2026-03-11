@@ -58,7 +58,7 @@ func (f *FontsScanner) Scan(ctx context.Context) (*scanner.ScanResult, error) {
 			name := strings.TrimSuffix(entry.Name(), filepath.Ext(entry.Name()))
 			section.CustomFonts = append(section.CustomFonts, domain.Font{
 				Name:       name,
-				BundlePath: filepath.Join(fontsDir, entry.Name()),
+				BundlePath: filepath.Join("Library", "Fonts", entry.Name()),
 			})
 		}
 	}

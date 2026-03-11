@@ -73,6 +73,8 @@ func TestEnvFilesScanner_Scan_SkipsHiddenDirs(t *testing.T) {
 	require.NotNil(t, result.EnvFiles)
 	assert.Len(t, result.EnvFiles.Files, 1)
 	assert.Contains(t, result.EnvFiles.Files[0].Source, "visible-project")
+	// Source must be relative to homeDir, not absolute
+	assert.False(t, filepath.IsAbs(result.EnvFiles.Files[0].Source))
 }
 
 func TestEnvFilesScanner_Scan_RespectsDepthLimit(t *testing.T) {
@@ -134,4 +136,5 @@ func TestEnvFilesScanner_Scan_EnvProduction(t *testing.T) {
 	require.NotNil(t, result.EnvFiles)
 	require.Len(t, result.EnvFiles.Files, 1)
 	assert.Contains(t, result.EnvFiles.Files[0].Source, ".env.production")
+	assert.False(t, filepath.IsAbs(result.EnvFiles.Files[0].Source))
 }
