@@ -38,13 +38,13 @@ func (g RestoreGroup) StageCount(snap *Snapshot) int {
 
 var restoreGroups = []RestoreGroup{
 	{ID: "01-foundation", Name: "foundation", Label: "Foundation", ScriptName: "01-foundation.sh",
-		SnapshotFields: []string{"Homebrew", "SSH", "GPG", "Git"}},
+		SnapshotFields: []string{"Homebrew", "SSH", "GPG", "Git", "GitHubCLI"}},
 	{ID: "02-shell", Name: "shell", Label: "Shell", ScriptName: "02-shell.sh",
 		SnapshotFields: []string{"Shell", "Terminal", "Tmux"}},
 	{ID: "03-runtimes", Name: "runtimes", Label: "Runtimes", ScriptName: "03-runtimes.sh",
 		SnapshotFields: []string{"Node", "Python", "Rust", "Flutter", "Go", "Ruby", "Java", "Deno", "Bun", "Asdf"}},
 	{ID: "04-editors", Name: "editors", Label: "Editors", ScriptName: "04-editors.sh",
-		SnapshotFields: []string{"VSCode", "Cursor", "Xcode", "JetBrains", "Neovim", "GitHubCLI"}},
+		SnapshotFields: []string{"VSCode", "Cursor", "Xcode", "JetBrains", "Neovim"}},
 	{ID: "05-infrastructure", Name: "infrastructure", Label: "Infrastructure", ScriptName: "05-infrastructure.sh",
 		SnapshotFields: []string{"Docker", "Kubernetes", "GCP", "AWS", "Azure", "Terraform", "Firebase", "CloudflareWrangler", "Vercel", "Flyio"}},
 	{ID: "06-repos", Name: "repos", Label: "Repos", ScriptName: "06-repos.sh",

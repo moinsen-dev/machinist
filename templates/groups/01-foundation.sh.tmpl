@@ -28,4 +28,11 @@ do_git_config() {
 run_stage "Git Configuration" do_git_config
 {{end}}
 
+{{if .GitHubCLI}}
+do_github_cli() {
+{{template "github-cli" .GitHubCLI}}
+}
+run_stage "GitHub CLI" do_github_cli
+{{end}}
+
 {{template "summary" .}}

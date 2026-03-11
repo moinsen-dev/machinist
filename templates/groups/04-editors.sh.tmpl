@@ -35,11 +35,4 @@ do_neovim() {
 run_stage "Neovim" do_neovim
 {{end}}
 
-{{if .GitHubCLI}}
-do_github_cli() {
-{{template "github-cli" .GitHubCLI}}
-}
-run_stage "GitHub CLI" do_github_cli
-{{end}}
-
 {{template "summary" .}}

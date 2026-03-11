@@ -126,18 +126,18 @@ do_api_tools() {
 run_stage "API Tools" do_api_tools
 {{end}}
 
-{{if .XDGConfig}}
-do_xdg_config() {
-{{template "xdg-config" .XDGConfig}}
-}
-run_stage "XDG Config" do_xdg_config
-{{end}}
-
 {{if .EnvFiles}}
 do_env_files() {
 {{template "env-files" .EnvFiles}}
 }
 run_stage "Environment Files" do_env_files
+{{end}}
+
+{{if .XDGConfig}}
+do_xdg_config() {
+{{template "xdg-config" .XDGConfig}}
+}
+run_stage "XDG Config" do_xdg_config
 {{end}}
 
 {{if .Databases}}
