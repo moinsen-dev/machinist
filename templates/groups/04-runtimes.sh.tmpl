@@ -21,6 +21,13 @@ do_rust() {
 run_stage "Rust" do_rust
 {{end}}
 
+{{if .Java}}
+do_java() {
+{{template "java" .Java}}
+}
+run_stage "Java/SDKMAN" do_java
+{{end}}
+
 {{if .Flutter}}
 do_flutter() {
 {{template "flutter" .Flutter}}
@@ -40,13 +47,6 @@ do_ruby() {
 {{template "ruby" .Ruby}}
 }
 run_stage "Ruby" do_ruby
-{{end}}
-
-{{if .Java}}
-do_java() {
-{{template "java" .Java}}
-}
-run_stage "Java/SDKMAN" do_java
 {{end}}
 
 {{if .Deno}}

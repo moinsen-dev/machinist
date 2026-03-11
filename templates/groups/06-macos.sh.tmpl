@@ -1,0 +1,45 @@
+{{template "preamble" .}}
+
+{{if .MacOSDefaults}}
+do_macos_defaults() {
+{{template "macos-defaults" .MacOSDefaults}}
+}
+run_stage "macOS Defaults" do_macos_defaults
+{{end}}
+
+{{if .Apps}}
+do_apps() {
+{{template "apps" .Apps}}
+}
+run_stage "Mac App Store Apps" do_apps
+{{end}}
+
+{{if or .Crontab .LaunchAgents}}
+do_scheduled() {
+{{template "scheduled" .Snapshot}}
+}
+run_stage "Scheduled Tasks" do_scheduled
+{{end}}
+
+{{if .Locale}}
+do_locale() {
+{{template "locale" .Locale}}
+}
+run_stage "Locale & Timezone" do_locale
+{{end}}
+
+{{if .HostsFile}}
+do_hosts_file() {
+{{template "hosts-file" .HostsFile}}
+}
+run_stage "Hosts File" do_hosts_file
+{{end}}
+
+{{if .Network}}
+do_network() {
+{{template "network" .Network}}
+}
+run_stage "Network" do_network
+{{end}}
+
+{{template "summary" .}}

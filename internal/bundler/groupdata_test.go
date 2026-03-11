@@ -13,24 +13,21 @@ func TestNewGroupTemplateData_SetsFields(t *testing.T) {
 		Homebrew: &domain.HomebrewSection{
 			Formulae: []domain.Package{{Name: "git"}},
 		},
-		SSH: &domain.SSHSection{
-			Keys: []string{"id_ed25519"},
-		},
 	}
 
 	group := domain.RestoreGroup{
-		ID:             "01-foundation",
-		Name:           "foundation",
-		Label:          "Foundation",
-		ScriptName:     "01-foundation.sh",
-		SnapshotFields: []string{"Homebrew", "SSH", "GPG", "Git"},
+		ID:             "01-homebrew",
+		Name:           "homebrew",
+		Label:          "Homebrew Packages",
+		ScriptName:     "01-homebrew.sh",
+		SnapshotFields: []string{"Homebrew"},
 	}
 
 	data := NewGroupTemplateData(snap, group)
 
-	assert.Equal(t, "Foundation", data.GroupLabel)
-	assert.Equal(t, "01-foundation", data.GroupID)
-	assert.Equal(t, 2, data.StageCount) // Homebrew + SSH are non-nil
+	assert.Equal(t, "Homebrew Packages", data.GroupLabel)
+	assert.Equal(t, "01-homebrew", data.GroupID)
+	assert.Equal(t, 1, data.StageCount) // Homebrew is non-nil
 }
 
 func TestNewGroupTemplateData_SnapshotFieldsAccessible(t *testing.T) {
@@ -42,11 +39,11 @@ func TestNewGroupTemplateData_SnapshotFieldsAccessible(t *testing.T) {
 	}
 
 	group := domain.RestoreGroup{
-		ID:             "01-foundation",
-		Name:           "foundation",
-		Label:          "Foundation",
-		ScriptName:     "01-foundation.sh",
-		SnapshotFields: []string{"Homebrew", "SSH", "GPG", "Git"},
+		ID:             "01-homebrew",
+		Name:           "homebrew",
+		Label:          "Homebrew Packages",
+		ScriptName:     "01-homebrew.sh",
+		SnapshotFields: []string{"Homebrew"},
 	}
 
 	data := NewGroupTemplateData(snap, group)
@@ -63,16 +60,16 @@ func TestNewGroupTemplateData_ZeroStageCount(t *testing.T) {
 	}
 
 	group := domain.RestoreGroup{
-		ID:             "03-runtimes",
+		ID:             "04-runtimes",
 		Name:           "runtimes",
-		Label:          "Runtimes",
-		ScriptName:     "03-runtimes.sh",
+		Label:          "Runtime Installers",
+		ScriptName:     "04-runtimes.sh",
 		SnapshotFields: []string{"Node", "Python", "Rust"},
 	}
 
 	data := NewGroupTemplateData(snap, group)
 
 	assert.Equal(t, 0, data.StageCount)
-	assert.Equal(t, "Runtimes", data.GroupLabel)
-	assert.Equal(t, "03-runtimes", data.GroupID)
+	assert.Equal(t, "Runtime Installers", data.GroupLabel)
+	assert.Equal(t, "04-runtimes", data.GroupID)
 }

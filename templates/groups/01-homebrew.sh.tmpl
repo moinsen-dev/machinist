@@ -1,0 +1,10 @@
+{{template "preamble" .}}
+
+{{if .Homebrew}}
+do_homebrew() {
+{{template "homebrew" .Homebrew}}
+}
+run_stage "Homebrew" do_homebrew
+{{end}}
+
+{{template "summary" .}}

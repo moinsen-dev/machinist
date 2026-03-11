@@ -562,17 +562,17 @@ func TestPrepareBundleDir_WritesGroupScripts(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Group scripts for groups with data
-	_, err = os.Stat(filepath.Join(outputDir, "01-foundation.sh"))
+	_, err = os.Stat(filepath.Join(outputDir, "01-homebrew.sh"))
 	assert.NoError(t, err)
-	_, err = os.Stat(filepath.Join(outputDir, "02-shell.sh"))
+	_, err = os.Stat(filepath.Join(outputDir, "03-configs.sh"))
 	assert.NoError(t, err)
 
 	// Groups without data must NOT be written
-	_, err = os.Stat(filepath.Join(outputDir, "03-runtimes.sh"))
+	_, err = os.Stat(filepath.Join(outputDir, "04-runtimes.sh"))
 	assert.True(t, os.IsNotExist(err))
 
 	// Scripts must be executable
-	info, _ := os.Stat(filepath.Join(outputDir, "01-foundation.sh"))
+	info, _ := os.Stat(filepath.Join(outputDir, "01-homebrew.sh"))
 	assert.True(t, info.Mode()&0111 != 0)
 }
 

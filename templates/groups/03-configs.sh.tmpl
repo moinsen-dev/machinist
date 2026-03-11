@@ -1,0 +1,248 @@
+{{template "preamble" .}}
+
+{{if .Git}}
+do_git_config() {
+{{template "git-config" .Git}}
+}
+run_stage "Git Configuration" do_git_config
+{{end}}
+
+{{if .GitHubCLI}}
+do_github_cli() {
+{{template "github-cli" .GitHubCLI}}
+}
+run_stage "GitHub CLI" do_github_cli
+{{end}}
+
+{{if .Shell}}
+do_shell() {
+{{template "shell" .Shell}}
+}
+run_stage "Shell Configuration" do_shell
+{{end}}
+
+{{if .Terminal}}
+do_terminal() {
+{{template "terminal" .Terminal}}
+}
+run_stage "Terminal Emulator" do_terminal
+{{end}}
+
+{{if .Tmux}}
+do_tmux() {
+{{template "tmux" .Tmux}}
+}
+run_stage "tmux" do_tmux
+{{end}}
+
+{{if .VSCode}}
+do_vscode() {
+{{template "vscode" .VSCode}}
+}
+run_stage "Visual Studio Code" do_vscode
+{{end}}
+
+{{if .Cursor}}
+do_cursor() {
+{{template "cursor" .Cursor}}
+}
+run_stage "Cursor" do_cursor
+{{end}}
+
+{{if .Neovim}}
+do_neovim() {
+{{template "neovim" .Neovim}}
+}
+run_stage "Neovim" do_neovim
+{{end}}
+
+{{if .JetBrains}}
+do_jetbrains() {
+{{template "jetbrains" .JetBrains}}
+}
+run_stage "JetBrains IDEs" do_jetbrains
+{{end}}
+
+{{if .Xcode}}
+do_xcode() {
+{{template "xcode" .Xcode}}
+}
+run_stage "Xcode" do_xcode
+{{end}}
+
+{{if .Docker}}
+do_docker() {
+{{template "docker" .Docker}}
+}
+run_stage "Docker" do_docker
+{{end}}
+
+{{if .AWS}}
+do_aws() {
+{{template "aws" .AWS}}
+}
+run_stage "AWS CLI" do_aws
+{{end}}
+
+{{if .Kubernetes}}
+do_kubernetes() {
+{{template "kubernetes" .Kubernetes}}
+}
+run_stage "Kubernetes" do_kubernetes
+{{end}}
+
+{{if .Terraform}}
+do_terraform() {
+{{template "terraform" .Terraform}}
+}
+run_stage "Terraform" do_terraform
+{{end}}
+
+{{if .Vercel}}
+do_vercel() {
+{{template "vercel" .Vercel}}
+}
+run_stage "Vercel" do_vercel
+{{end}}
+
+{{if .GCP}}
+do_gcp() {
+{{template "gcp" .GCP}}
+}
+run_stage "Google Cloud" do_gcp
+{{end}}
+
+{{if .Azure}}
+do_azure() {
+{{template "azure" .Azure}}
+}
+run_stage "Azure" do_azure
+{{end}}
+
+{{if .Flyio}}
+do_flyio() {
+{{template "flyio" .Flyio}}
+}
+run_stage "Fly.io" do_flyio
+{{end}}
+
+{{if .Firebase}}
+do_firebase() {
+{{template "firebase" .Firebase}}
+}
+run_stage "Firebase" do_firebase
+{{end}}
+
+{{if .CloudflareWrangler}}
+do_cloudflare() {
+{{template "cloudflare" .CloudflareWrangler}}
+}
+run_stage "Cloudflare" do_cloudflare
+{{end}}
+
+{{if .Karabiner}}
+do_karabiner() {
+{{template "karabiner" .Karabiner}}
+}
+run_stage "Karabiner-Elements" do_karabiner
+{{end}}
+
+{{if .Rectangle}}
+do_rectangle() {
+{{template "rectangle" .Rectangle}}
+}
+run_stage "Rectangle" do_rectangle
+{{end}}
+
+{{if .BetterTouchTool}}
+do_bettertouchtool() {
+{{template "bettertouchtool" .BetterTouchTool}}
+}
+run_stage "BetterTouchTool" do_bettertouchtool
+{{end}}
+
+{{if .OnePassword}}
+do_onepassword() {
+{{template "onepassword" .OnePassword}}
+}
+run_stage "1Password CLI" do_onepassword
+{{end}}
+
+{{if .AITools}}
+do_ai_tools() {
+{{template "ai-tools" .AITools}}
+}
+run_stage "AI Tools" do_ai_tools
+{{end}}
+
+{{if .APITools}}
+do_api_tools() {
+{{template "api-tools" .APITools}}
+}
+run_stage "API Tools" do_api_tools
+{{end}}
+
+{{if .XDGConfig}}
+do_xdg_config() {
+{{template "xdg-config" .XDGConfig}}
+}
+run_stage "XDG Config" do_xdg_config
+{{end}}
+
+{{if .Databases}}
+do_databases() {
+{{template "databases" .Databases}}
+}
+run_stage "Database Clients" do_databases
+{{end}}
+
+{{if .Registries}}
+do_registries() {
+{{template "registries" .Registries}}
+}
+run_stage "Package Registries" do_registries
+{{end}}
+
+{{if .Fonts}}
+do_fonts() {
+{{template "fonts" .Fonts}}
+}
+run_stage "Fonts" do_fonts
+{{end}}
+
+{{if .Folders}}
+do_folders() {
+{{template "folders" .Folders}}
+}
+run_stage "Folder Structure" do_folders
+{{end}}
+
+{{if .Browser}}
+do_browser() {
+{{template "browser" .Browser}}
+}
+run_stage "Browser" do_browser
+{{end}}
+
+{{if .Raycast}}
+do_raycast() {
+{{template "raycast" .Raycast}}
+}
+run_stage "Raycast" do_raycast
+{{end}}
+
+{{if .Alfred}}
+do_alfred() {
+{{template "alfred" .Alfred}}
+}
+run_stage "Alfred" do_alfred
+{{end}}
+
+{{if .LoginItems}}
+do_login_items() {
+{{template "login-items" .LoginItems}}
+}
+run_stage "Login Items" do_login_items
+{{end}}
+
+{{template "summary" .}}
