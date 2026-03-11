@@ -374,8 +374,47 @@ func collectConfigDirs(snapshot *domain.Snapshot) []configDirEntry {
 	return dirs
 }
 
+// excludedDirNames lists directory names that should never be bundled.
+// These are virtual environments, caches, and build artifacts that are
+// platform-specific and should be recreated on the target machine.
+var excludedDirNames = map[string]bool{
+	"virtenv":     true,
+	".venv":       true,
+	"venv":        true,
+	"__pycache__": true,
+	"node_modules": true,
+	".cache":      true,
+}
+
+// excludedFileNames lists files that contain ephemeral credentials or tokens
+// that expire and should not be bundled. Users should re-authenticate instead.
+var excludedFileNames = map[string]bool{
+	"access_tokens.db":  true,
+	"credentials.db":    true,
+	"cookie_jar":        true,
+}
+
+// excludedDirPrefixes lists directory name prefixes to exclude (e.g. legacy_credentials).
+var excludedDirPrefixes = []string{
+	"legacy_credentials",
+}
+
+// shouldExcludeDir returns true if the directory name should be excluded from bundling.
+func shouldExcludeDir(name string) bool {
+	if excludedDirNames[name] {
+		return true
+	}
+	for _, prefix := range excludedDirPrefixes {
+		if name == prefix {
+			return true
+		}
+	}
+	return false
+}
+
 // copyConfigDir copies an entire directory tree into the bundle directory.
 // Source is resolved relative to homeDir. Missing directories are silently skipped.
+// Directories matching excludedDirNames and files matching excludedFileNames are skipped.
 func copyConfigDir(entry configDirEntry, bundleDir string, homeDir string) error {
 	srcDir := filepath.Join(homeDir, entry.SourceDir)
 	info, err := os.Stat(srcDir)
@@ -396,6 +435,19 @@ func copyConfigDir(entry configDirEntry, bundleDir string, homeDir string) error
 		if fi.Mode()&os.ModeSymlink != 0 {
 			return nil
 		}
+
+		name := fi.Name()
+
+		// Skip excluded directories entirely
+		if fi.IsDir() && shouldExcludeDir(name) {
+			return filepath.SkipDir
+		}
+
+		// Skip excluded files (ephemeral credentials/tokens)
+		if !fi.IsDir() && excludedFileNames[name] {
+			return nil
+		}
+
 		rel, err := filepath.Rel(srcDir, path)
 		if err != nil {
 			return err

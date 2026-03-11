@@ -75,7 +75,18 @@ var dmgCmd = &cobra.Command{
 			line, _ := reader.ReadString('\n')
 			passphrase = strings.TrimSpace(line)
 			if passphrase == "" {
-				fmt.Fprintf(cmd.OutOrStdout(), "Skipping age encryption of sensitive files.\n")
+				fmt.Fprintf(cmd.OutOrStdout(), "\n")
+			fmt.Fprintf(cmd.ErrOrStderr(), "WARNING: Skipping encryption — the following will NOT be included in the DMG:\n")
+			if snap.SSH != nil && len(snap.SSH.Keys) > 0 {
+				fmt.Fprintf(cmd.ErrOrStderr(), "  - %d SSH key(s): %s\n", len(snap.SSH.Keys), strings.Join(snap.SSH.Keys, ", "))
+			}
+			if snap.GPG != nil && len(snap.GPG.ConfigFiles) > 0 {
+				fmt.Fprintf(cmd.ErrOrStderr(), "  - %d GPG config file(s)\n", len(snap.GPG.ConfigFiles))
+			}
+			if snap.EnvFiles != nil && len(snap.EnvFiles.Files) > 0 {
+				fmt.Fprintf(cmd.ErrOrStderr(), "  - %d .env file(s)\n", len(snap.EnvFiles.Files))
+			}
+			fmt.Fprintf(cmd.ErrOrStderr(), "Re-run with a passphrase to include these files.\n")
 			}
 		}
 
